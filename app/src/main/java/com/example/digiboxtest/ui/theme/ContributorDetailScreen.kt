@@ -1,35 +1,29 @@
 package com.example.digiboxtest.ui.theme
 
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
+import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.* // Using material3 for everything
+import androidx.compose.material3.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
+import androidx.compose.ui.*
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+import androidx.compose.ui.unit.*
 import androidx.navigation.NavController
 import com.example.digiboxtest.R
 
 @Composable
-fun CreateDatasetScreen(navController: NavController) {
+fun ContributorDetailScreen(navController: NavController) {
     val bgGradient = Brush.verticalGradient(
         colors = listOf(Color(0xFFA1D4CA), Color.White)
     )
 
-    var datasetName by remember { mutableStateOf("") }
-    var datasetDescription by remember { mutableStateOf("") }
-    var datasetCategory by remember { mutableStateOf("") }
-    var datasetFormat by remember { mutableStateOf("") }
-    var profileFile by remember { mutableStateOf("Pilih File") }
+    var creatorName by remember { mutableStateOf("") }
+    var verifierName by remember { mutableStateOf("") }
 
     Box(
         modifier = Modifier
@@ -48,7 +42,7 @@ fun CreateDatasetScreen(navController: NavController) {
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Image(
-                        painter = painterResource(id = R.drawable.logo), // ganti sesuai resource
+                        painter = painterResource(id = R.drawable.logo),
                         contentDescription = null,
                         modifier = Modifier.size(40.dp)
                     )
@@ -79,26 +73,17 @@ fun CreateDatasetScreen(navController: NavController) {
             )
 
             Spacer(modifier = Modifier.height(16.dp))
-            Text("Informasi Dataset", fontWeight = FontWeight.Bold)
+
+            Text("Detail Kontributor", fontWeight = FontWeight.Bold)
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            DatasetTextField("1. Nama Dataset", datasetName) { datasetName = it }
-            DatasetTextField("2. Deskripsi Dataset", datasetDescription) { datasetDescription = it }
-            DatasetTextField("3. Kategori Dataset", datasetCategory) { datasetCategory = it }
-            DatasetTextField("4. Format Dataset", datasetFormat, "E.g. excel, csv, dll") { datasetFormat = it }
+            ContributorTextField("1. Nama Pembuat", creatorName) {
+                creatorName = it
+            }
 
-            Spacer(modifier = Modifier.height(8.dp))
-            Text("5. Profil Dataset")
-
-            Button(
-                onClick = { /* Handle file picker */ },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(48.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFBDBDBD))
-            ) {
-                Text(profileFile, color = Color.White)
+            ContributorTextField("2. Nama Pemverifikasi", verifierName) {
+                verifierName = it
             }
 
             Spacer(modifier = Modifier.height(24.dp))
@@ -114,7 +99,7 @@ fun CreateDatasetScreen(navController: NavController) {
                     Text("Back", color = Color.White)
                 }
                 Button(
-                    onClick = { navController.navigate("contributorDetail") },
+                    onClick = { navController.navigate("datasetMetadata") },
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2D2E34))
                 ) {
                     Text("Next", color = Color.White)
@@ -140,18 +125,13 @@ fun CreateDatasetScreen(navController: NavController) {
 }
 
 @Composable
-fun DatasetTextField(
-    label: String,
-    value: String,
-    placeholder: String = "",
-    onValueChange: (String) -> Unit
-) {
+fun ContributorTextField(label: String, value: String, onValueChange: (String) -> Unit) {
     Column {
         Text(label, fontSize = 14.sp, fontWeight = FontWeight.Normal)
         OutlinedTextField(
             value = value,
             onValueChange = onValueChange,
-            placeholder = { Text(placeholder.ifEmpty { label }) },
+            placeholder = { Text(label.replace("1. ", "").replace("2. ", "")) },
             shape = RoundedCornerShape(50),
             modifier = Modifier
                 .fillMaxWidth()

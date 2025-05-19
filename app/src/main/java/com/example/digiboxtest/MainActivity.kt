@@ -28,8 +28,10 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.example.digiboxtest.ui.theme.ContributorDetailScreen
 import com.example.digiboxtest.ui.theme.CreateDatasetScreen
 import com.example.digiboxtest.ui.theme.DatasetCollectionScreen
+import com.example.digiboxtest.ui.theme.DatasetMetadataScreen
 import com.example.digiboxtest.ui.theme.LoginScreen
 import com.example.digiboxtest.ui.theme.SignUpScreen
 import com.example.digiboxtest.ui.theme.UserPreferences
@@ -96,7 +98,9 @@ fun DigiBoxApp() {
                     navController.navigate("login")
                 }
             }
-        }
+            composable("contributorDetail") { ContributorDetailScreen(navController) }
+            composable("datasetMetadata") { DatasetMetadataScreen(navController) }
+            }
     }
 }
 

@@ -4,7 +4,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.* // Using material3 for everything
+import androidx.compose.material3.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.runtime.*
@@ -20,16 +20,15 @@ import androidx.navigation.NavController
 import com.example.digiboxtest.R
 
 @Composable
-fun CreateDatasetScreen(navController: NavController) {
+fun DatasetMetadataScreen(navController: NavController) {
     val bgGradient = Brush.verticalGradient(
         colors = listOf(Color(0xFFA1D4CA), Color.White)
     )
 
-    var datasetName by remember { mutableStateOf("") }
-    var datasetDescription by remember { mutableStateOf("") }
-    var datasetCategory by remember { mutableStateOf("") }
-    var datasetFormat by remember { mutableStateOf("") }
-    var profileFile by remember { mutableStateOf("Pilih File") }
+    var rowCount by remember { mutableStateOf("") }
+    var featureCount by remember { mutableStateOf("") }
+    var keyword by remember { mutableStateOf("") }
+    var fileSelected by remember { mutableStateOf("Pilih File") }
 
     Box(
         modifier = Modifier
@@ -48,7 +47,7 @@ fun CreateDatasetScreen(navController: NavController) {
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Image(
-                        painter = painterResource(id = R.drawable.logo), // ganti sesuai resource
+                        painter = painterResource(id = R.drawable.logo),
                         contentDescription = null,
                         modifier = Modifier.size(40.dp)
                     )
@@ -79,27 +78,27 @@ fun CreateDatasetScreen(navController: NavController) {
             )
 
             Spacer(modifier = Modifier.height(16.dp))
+
             Text("Informasi Dataset", fontWeight = FontWeight.Bold)
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            DatasetTextField("1. Nama Dataset", datasetName) { datasetName = it }
-            DatasetTextField("2. Deskripsi Dataset", datasetDescription) { datasetDescription = it }
-            DatasetTextField("3. Kategori Dataset", datasetCategory) { datasetCategory = it }
-            DatasetTextField("4. Format Dataset", datasetFormat, "E.g. excel, csv, dll") { datasetFormat = it }
-
-            Spacer(modifier = Modifier.height(8.dp))
-            Text("5. Profil Dataset")
-
+            Text("1. File Dataset")
             Button(
-                onClick = { /* Handle file picker */ },
+                onClick = { /* file picker logic */ },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(48.dp),
+                    .padding(vertical = 4.dp),
+                shape = RoundedCornerShape(50),
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFBDBDBD))
             ) {
-                Text(profileFile, color = Color.White)
+                Text(fileSelected, color = Color.White)
             }
+
+            Spacer(modifier = Modifier.height(8.dp))
+            DatasetTextField("2. Jumlah Baris (Row)", rowCount) { rowCount = it }
+            DatasetTextField("3. Jumlah Fitur", featureCount) { featureCount = it }
+            DatasetTextField("4. Kata Kunci Pencarian Dataset anda", keyword) { keyword = it }
 
             Spacer(modifier = Modifier.height(24.dp))
 
@@ -114,10 +113,10 @@ fun CreateDatasetScreen(navController: NavController) {
                     Text("Back", color = Color.White)
                 }
                 Button(
-                    onClick = { navController.navigate("contributorDetail") },
+                    onClick = { /* Submit logic here */ },
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2D2E34))
                 ) {
-                    Text("Next", color = Color.White)
+                    Text("Submit", color = Color.White)
                 }
             }
 
@@ -136,27 +135,5 @@ fun CreateDatasetScreen(navController: NavController) {
                 }
             }
         }
-    }
-}
-
-@Composable
-fun DatasetTextField(
-    label: String,
-    value: String,
-    placeholder: String = "",
-    onValueChange: (String) -> Unit
-) {
-    Column {
-        Text(label, fontSize = 14.sp, fontWeight = FontWeight.Normal)
-        OutlinedTextField(
-            value = value,
-            onValueChange = onValueChange,
-            placeholder = { Text(placeholder.ifEmpty { label }) },
-            shape = RoundedCornerShape(50),
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 4.dp),
-            singleLine = true
-        )
     }
 }
