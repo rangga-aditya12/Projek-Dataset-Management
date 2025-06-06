@@ -54,12 +54,14 @@ import androidx.navigation.compose.rememberNavController
 import com.example.digiboxtest.ui.theme.ContributorDetailScreen
 import com.example.digiboxtest.ui.theme.CreateDatasetScreen
 import com.example.digiboxtest.ui.theme.DatasetCollectionScreen
+import com.example.digiboxtest.ui.theme.DatasetDetailScreen
+import com.example.digiboxtest.ui.theme.DatasetListScreen
 import com.example.digiboxtest.ui.theme.DatasetMetadataScreen
 import com.example.digiboxtest.ui.theme.LoginScreen
 import com.example.digiboxtest.ui.theme.SignUpScreen
 import com.example.digiboxtest.ui.theme.UserPreferences
+import com.example.digiboxtest.viewmodel.DatasetRoomViewModel
 import kotlinx.coroutines.launch
-
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -75,13 +77,12 @@ fun DigiBoxApp() {
     val navController = rememberNavController()
     val context = LocalContext.current
     val userPreferences = remember { UserPreferences(context) }
+    val viewModel: DatasetRoomViewModel = viewModel()
 
-    // collect login status dari datastore
     val isLoggedIn by userPreferences.isLoggedIn.collectAsState(initial = false)
     var loading by remember { mutableStateOf(true) }
 
     LaunchedEffect(Unit) {
-        // delay kecil untuk simulasi loading
         kotlinx.coroutines.delay(500)
         loading = false
     }
@@ -121,13 +122,28 @@ fun DigiBoxApp() {
                     navController.navigate("login")
                 }
             }
-            composable("contributorDetail") { ContributorDetailScreen(navController) }
-            composable("datasetMetadata") { DatasetMetadataScreen(navController, viewModel()) }
+            composable("contributorDetail") {
+                ContributorDetailScreen(navController)
             }
-    }
-}
+            composable("datasetMetadata") {
+                DatasetMetadataScreen(navController, viewModel)
+            }
+            composable("datasetList") {
+                DatasetListScreen(navController, viewModel)
+            }
+            composable("datasetDetail/{id}") { backStackEntry ->
+                val datasetId = backStackEntry.arguments?.getString("id")?.toIntOrNull()
+                if (datasetId != null) {
+                    DatasetDetailScreen(navController, datasetId, viewModel)
+                } else {
+                    // fallback/error handling
+                }
+            }
+            }
 
+        }
 
+        }
 
 @Composable
 fun DigiboxMobileUI(navController: NavController, isLoggedIn: Boolean) {
@@ -141,7 +157,6 @@ fun DigiboxMobileUI(navController: NavController, isLoggedIn: Boolean) {
             .background(bgGradient)
             .padding(16.dp)
     ) {
-        // Header
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
