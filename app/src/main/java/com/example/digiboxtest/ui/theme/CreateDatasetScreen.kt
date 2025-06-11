@@ -1,13 +1,32 @@
 package com.example.digiboxtest.ui.theme
 
+import android.net.Uri
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.* // Using material3 for everything
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
-import androidx.compose.runtime.*
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -18,6 +37,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.digiboxtest.R
+import com.example.digiboxtest.components.ImagePickerButton
+import coil.compose.rememberAsyncImagePainter
+
 
 @Composable
 fun CreateDatasetScreen(navController: NavController) {
@@ -30,6 +52,8 @@ fun CreateDatasetScreen(navController: NavController) {
     var datasetCategory by remember { mutableStateOf("") }
     var datasetFormat by remember { mutableStateOf("") }
     var profileFile by remember { mutableStateOf("Pilih File") }
+    var profileImageUri by remember { mutableStateOf<Uri?>(null) }
+    var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
 
     Box(
         modifier = Modifier
@@ -89,18 +113,24 @@ fun CreateDatasetScreen(navController: NavController) {
             DatasetTextField("4. Format Dataset", datasetFormat, "E.g. excel, csv, dll") { datasetFormat = it }
 
             Spacer(modifier = Modifier.height(8.dp))
+
             Text("5. Profil Dataset")
 
-            Button(
-                onClick = { /* Handle file picker */ },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(48.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFBDBDBD))
-            ) {
-                Text(profileFile, color = Color.White)
+            ImagePickerButton { uri ->
+                profileImageUri = uri
             }
 
+            Spacer(modifier = Modifier.height(8.dp))
+
+            profileImageUri?.let {
+                Image(
+                    painter = rememberAsyncImagePainter(it),
+                    contentDescription = null,
+                    modifier = Modifier
+                        .size(120.dp)
+                        .padding(4.dp)
+                )
+            }
             Spacer(modifier = Modifier.height(24.dp))
 
             Row(

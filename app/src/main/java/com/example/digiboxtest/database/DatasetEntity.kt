@@ -12,5 +12,5 @@ data class DatasetEntity(
     val rowCount: Int,
     val featureCount: Int,
     val keywords: String,
-    val imageResId: Int? = null
+    val profileImageUri: String? = null
 )

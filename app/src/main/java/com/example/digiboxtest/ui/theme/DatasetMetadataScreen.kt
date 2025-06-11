@@ -35,6 +35,7 @@ fun DatasetMetadataScreen(
     var keywords by remember { mutableStateOf("") }
     var fileSelected by remember { mutableStateOf("Pilih File") }
 
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -128,7 +129,7 @@ fun DatasetMetadataScreen(
                                 rowCount = rowCount.toIntOrNull() ?: 0,
                                 featureCount = featureCount.toIntOrNull() ?: 0,
                                 keywords = keywords,
-                                imageResId = R.drawable.logo // kamu bisa ganti sesuai kategori
+                                profileImageUri = null // kamu bisa ganti sesuai kategori
                             )
                         )
                         navController.navigate("datasetList")
