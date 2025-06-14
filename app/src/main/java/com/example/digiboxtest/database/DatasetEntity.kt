@@ -12,5 +12,9 @@ data class DatasetEntity(
     val rowCount: Int,
     val featureCount: Int,
     val keywords: String,
-    val profileImageUri: String? = null
+    val profileImageUri: String? = null,
+    // Add these new fields
+    val category: String,
+    val creator: String,
+    val verifier: String
 )

@@ -121,6 +121,12 @@ fun DatasetMetadataScreen(
 
                 Button(
                     onClick = {
+                        // NOTE: You should pass the real data from your input states.
+                        // These are examples.
+                        val creatorName = "Lionel Maxim, Enzo Rossi"
+                        val verifierName = "Rodri Dor"
+                        val categoryName = "Klasifikasi, Computer Vision"
+
                         viewModel.addDataset(
                             DatasetEntity(
                                 title = title,
@@ -129,7 +135,11 @@ fun DatasetMetadataScreen(
                                 rowCount = rowCount.toIntOrNull() ?: 0,
                                 featureCount = featureCount.toIntOrNull() ?: 0,
                                 keywords = keywords,
-                                profileImageUri = null // kamu bisa ganti sesuai kategori
+                                profileImageUri = null, // Replace with the actual image URI if you have it
+                                // Add the new fields here
+                                category = categoryName,
+                                creator = creatorName,
+                                verifier = verifierName
                             )
                         )
                         navController.navigate("datasetList")

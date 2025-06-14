@@ -5,8 +5,9 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 
-@Database(entities = [DatasetEntity::class], version = 2)
+@Database(entities = [DatasetEntity::class], version = 3) // <--- Increment the version number
 abstract class AppDatabase : RoomDatabase() {
+    // ... rest of the file is the same
     abstract fun datasetDao(): DatasetDao
 
     companion object {
@@ -19,7 +20,7 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "digibox_database"
                 )
-                    .fallbackToDestructiveMigration() // ⬅️ tambahkan ini
+                    .fallbackToDestructiveMigration() // This will handle the schema change
                     .build()
                     .also { INSTANCE = it }
             }
