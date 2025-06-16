@@ -16,12 +16,20 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -38,8 +46,24 @@ import com.example.digiboxtest.database.DatasetEntity
 import com.example.digiboxtest.viewmodel.DatasetRoomViewModel
 
 @Composable
-fun DatasetListScreen(navController: NavController, viewModel: DatasetRoomViewModel) {
-    val datasetList = viewModel.datasetList
+fun DatasetListScreen(
+    navController: NavController,
+    viewModel: DatasetRoomViewModel,
+    initialQuery: String = ""
+) {
+    var searchQuery by remember { mutableStateOf(initialQuery) }
+
+    val filteredDatasetList = remember(searchQuery, viewModel.datasetList) {
+        if (searchQuery.isBlank()) {
+            viewModel.datasetList
+        } else {
+            viewModel.datasetList.filter { dataset ->
+                dataset.title.contains(searchQuery, ignoreCase = true) ||
+                        dataset.description.contains(searchQuery, ignoreCase = true) ||
+                        dataset.keywords.contains(searchQuery, ignoreCase = true)
+            }
+        }
+    }
 
     Column(modifier = Modifier
         .fillMaxSize()
@@ -48,14 +72,30 @@ fun DatasetListScreen(navController: NavController, viewModel: DatasetRoomViewMo
         Text("Your Datasets", fontSize = 24.sp, fontWeight = FontWeight.Bold)
         Spacer(modifier = Modifier.height(16.dp))
 
-        if (datasetList.isEmpty()) {
+        OutlinedTextField(
+            value = searchQuery,
+            onValueChange = { searchQuery = it },
+            modifier = Modifier.fillMaxWidth(),
+            placeholder = { Text("Search by title, description, or keyword...") },
+            leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Search Icon") },
+            singleLine = true,
+            shape = RoundedCornerShape(24.dp)
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        if (filteredDatasetList.isEmpty()) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text("No datasets found.", color = Color.Gray)
+                Text(
+                    if (searchQuery.isNotBlank()) "No datasets found for \"$searchQuery\"."
+                    else "No datasets found.",
+                    color = Color.Gray
+                )
             }
         } else {
             LazyColumn(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                items(datasetList.size) { index ->
-                    val dataset = datasetList[index]
+                items(filteredDatasetList.size) { index ->
+                    val dataset = filteredDatasetList[index]
                     DatasetCard(
                         dataset = dataset,
                         onViewClick = {
@@ -89,7 +129,6 @@ fun DatasetCard(
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                // --- BAGIAN GAMBAR YANG DIPERBAIKI ---
                 Image(
                     painter = if (dataset.profileImageUri != null) {
                         rememberAsyncImagePainter(dataset.profileImageUri)
@@ -97,12 +136,11 @@ fun DatasetCard(
                         painterResource(id = R.drawable.logo)
                     },
                     contentDescription = dataset.title,
-                    contentScale = ContentScale.Crop, // Agar gambar pas
+                    contentScale = ContentScale.Crop,
                     modifier = Modifier
                         .size(48.dp)
-                        .clip(CircleShape) // Membuat gambar menjadi lingkaran
+                        .clip(CircleShape)
                 )
-                // ------------------------------------
 
                 Spacer(modifier = Modifier.width(12.dp))
                 Column {

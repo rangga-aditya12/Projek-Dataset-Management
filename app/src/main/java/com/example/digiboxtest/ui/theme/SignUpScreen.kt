@@ -1,5 +1,6 @@
 package com.example.digiboxtest.ui.theme
 
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -26,11 +27,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import com.example.digiboxtest.database.UserEntity
+import com.example.digiboxtest.viewmodel.UserViewModel
 
 @Composable
 fun SignUpScreen(navController: NavController) {
@@ -41,6 +46,10 @@ fun SignUpScreen(navController: NavController) {
     var username by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var confirmPassword by remember { mutableStateOf("") }
+
+    // NEW: Initialize ViewModel and get context for Toast
+    val userViewModel: UserViewModel = viewModel()
+    val context = LocalContext.current
 
     Box(
         modifier = Modifier
@@ -94,8 +103,29 @@ fun SignUpScreen(navController: NavController) {
 
             Spacer(modifier = Modifier.height(16.dp))
 
+            // UPDATED: onClick logic is now implemented
             Button(
-                onClick = { /* TODO: Handle sign-up logic */ },
+                onClick = {
+                    if (username.isBlank() || password.isBlank()) {
+                        Toast.makeText(context, "Please fill all fields.", Toast.LENGTH_SHORT).show()
+                    } else if (password != confirmPassword) {
+                        Toast.makeText(context, "Passwords do not match.", Toast.LENGTH_SHORT).show()
+                    } else {
+                        // In a real app, hash the password before storing
+                        val user = UserEntity(username = username, passwordHash = password)
+                        userViewModel.signUp(
+                            user = user,
+                            onSuccess = {
+                                Toast.makeText(context, "Sign up successful! Please log in.", Toast.LENGTH_LONG).show()
+                                // Navigate back to login screen after successful sign up
+                                navController.popBackStack()
+                            },
+                            onError = { errorMsg ->
+                                Toast.makeText(context, errorMsg, Toast.LENGTH_SHORT).show()
+                            }
+                        )
+                    }
+                },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(50.dp),

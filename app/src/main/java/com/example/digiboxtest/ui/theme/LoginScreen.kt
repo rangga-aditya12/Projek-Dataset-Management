@@ -1,6 +1,7 @@
 package com.example.digiboxtest.ui.theme
 
 import android.content.Context
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -23,28 +24,30 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import kotlinx.coroutines.launch
+import com.example.digiboxtest.viewmodel.UserViewModel
 
-
+// UPDATED: onLoginSuccess now passes the username (String)
 @Composable
-fun LoginScreen(navController: NavController, onLoginSuccess: () -> Unit, context: Context) {
+fun LoginScreen(navController: NavController, onLoginSuccess: (String) -> Unit, context: Context) {
     val bgGradient = Brush.verticalGradient(listOf(Color(0xFFA1D4CA), Color.White))
     var username by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
 
-    val prefs = remember { UserPreferences(context) }
-    val coroutineScope = rememberCoroutineScope()
+    // NEW: Initialize UserViewModel and get context
+    val userViewModel: UserViewModel = viewModel()
+    val localContext = LocalContext.current
 
     Box(
         modifier = Modifier
@@ -76,7 +79,8 @@ fun LoginScreen(navController: NavController, onLoginSuccess: () -> Unit, contex
                     shape = RoundedCornerShape(50),
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(vertical = 4.dp)
+                        .padding(vertical = 4.dp),
+                    singleLine = true
                 )
 
                 OutlinedTextField(
@@ -87,7 +91,8 @@ fun LoginScreen(navController: NavController, onLoginSuccess: () -> Unit, contex
                     shape = RoundedCornerShape(50),
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(vertical = 4.dp)
+                        .padding(vertical = 4.dp),
+                    singleLine = true
                 )
 
                 Spacer(modifier = Modifier.height(8.dp))
@@ -95,17 +100,24 @@ fun LoginScreen(navController: NavController, onLoginSuccess: () -> Unit, contex
 
                 Spacer(modifier = Modifier.height(16.dp))
 
+                // UPDATED: onClick logic now uses UserViewModel for authentication
                 Button(
                     onClick = {
-                        if (username.isNotEmpty() && password.isNotEmpty()) {
-                            // Cek login dan simpan status
-                            coroutineScope.launch {
-                                prefs.saveLoginStatus(true) // ✅ Simpan status login
-                                onLoginSuccess() // Memberitahukan bahwa login berhasil
-                                navController.navigate("home") {
-                                    popUpTo("login") { inclusive = true }
+                        if (username.isNotBlank() && password.isNotBlank()) {
+                            // In a real app, hash the password before sending
+                            userViewModel.login(
+                                username = username,
+                                passwordHash = password,
+                                onSuccess = {
+                                    // Pass the username to the callback on success
+                                    onLoginSuccess(username)
+                                },
+                                onError = { errorMsg ->
+                                    Toast.makeText(localContext, errorMsg, Toast.LENGTH_SHORT).show()
                                 }
-                            }
+                            )
+                        } else {
+                            Toast.makeText(localContext, "Please enter username and password.", Toast.LENGTH_SHORT).show()
                         }
                     },
                     modifier = Modifier.fillMaxWidth(),
@@ -128,3 +140,4 @@ fun LoginScreen(navController: NavController, onLoginSuccess: () -> Unit, contex
         }
     }
 }
+

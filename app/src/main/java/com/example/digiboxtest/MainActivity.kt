@@ -19,6 +19,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.Search
@@ -37,13 +39,16 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -55,15 +60,16 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.digiboxtest.ui.theme.ContributorDetailScreen
 import com.example.digiboxtest.ui.theme.CreateDatasetScreen
-import com.example.digiboxtest.ui.theme.DatasetCollectionScreen
 import com.example.digiboxtest.ui.theme.DatasetDetailScreen
 import com.example.digiboxtest.ui.theme.DatasetListScreen
 import com.example.digiboxtest.ui.theme.DatasetMetadataScreen
 import com.example.digiboxtest.ui.theme.EditDatasetScreen
 import com.example.digiboxtest.ui.theme.LoginScreen
+import com.example.digiboxtest.ui.theme.ProfileScreen
 import com.example.digiboxtest.ui.theme.SignUpScreen
 import com.example.digiboxtest.ui.theme.UserPreferences
 import com.example.digiboxtest.viewmodel.DatasetRoomViewModel
+import com.example.digiboxtest.viewmodel.UserViewModel
 import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
@@ -80,7 +86,8 @@ fun DigiBoxApp() {
     val navController = rememberNavController()
     val context = LocalContext.current
     val userPreferences = remember { UserPreferences(context) }
-    val viewModel: DatasetRoomViewModel = viewModel()
+    val datasetViewModel: DatasetRoomViewModel = viewModel()
+    val userViewModel: UserViewModel = viewModel()
 
     val isLoggedIn by userPreferences.isLoggedIn.collectAsState(initial = false)
     var loading by remember { mutableStateOf(true) }
@@ -97,19 +104,35 @@ fun DigiBoxApp() {
     } else {
         NavHost(navController = navController, startDestination = if (isLoggedIn) "home" else "login") {
             composable("home") {
-                DigiboxMobileUI(navController, isLoggedIn)
+                DigiboxMobileUI(navController, isLoggedIn) {
+                    if (isLoggedIn) {
+                        navController.navigate("profile")
+                    } else {
+                        navController.navigate("login")
+                    }
+                }
             }
-            composable("dataset") {
-                DatasetCollectionScreen()
+            composable(
+                route = "datasetList?query={query}",
+                arguments = listOf(navArgument("query") { defaultValue = "" })
+            ) { backStackEntry ->
+                val query = backStackEntry.arguments?.getString("query") ?: ""
+                DatasetListScreen(
+                    navController = navController,
+                    viewModel = datasetViewModel,
+                    initialQuery = query
+                )
             }
             composable("login") {
                 val coroutineScope = rememberCoroutineScope()
-
                 LoginScreen(
                     navController = navController,
-                    onLoginSuccess = {
+                    onLoginSuccess = { username ->
                         coroutineScope.launch {
-                            userPreferences.saveLoginStatus(true)
+                            userPreferences.saveLoginSession(true, username)
+                            navController.navigate("home") {
+                                popUpTo("login") { inclusive = true }
+                            }
                         }
                     },
                     context = context
@@ -118,32 +141,35 @@ fun DigiBoxApp() {
             composable("signup") {
                 SignUpScreen(navController)
             }
-            composable("createDataset") {
-                if (isLoggedIn) {
-                    CreateDatasetScreen(navController, viewModel)
-                } else {
-                    navController.navigate("login")
+            composable("profile") {
+                val coroutineScope = rememberCoroutineScope()
+                ProfileScreen(navController = navController) {
+                    coroutineScope.launch {
+                        userPreferences.clearLoginSession()
+                        navController.navigate("login") {
+                            popUpTo("home") { inclusive = true }
+                        }
+                    }
                 }
+            }
+            composable("createDataset") {
+                CreateDatasetScreen(navController, datasetViewModel)
             }
             composable("contributorDetail") {
-                ContributorDetailScreen(navController, viewModel)
+                ContributorDetailScreen(navController, datasetViewModel)
             }
             composable("datasetMetadata") {
-                DatasetMetadataScreen(navController, viewModel)
+                DatasetMetadataScreen(navController, datasetViewModel)
             }
-            composable("datasetList") {
-                DatasetListScreen(navController, viewModel)
-            }
-            composable("datasetDetail/{id}") { backStackEntry ->
-                val datasetId = backStackEntry.arguments?.getString("id")?.toIntOrNull()
+            composable(
+                route = "datasetDetail/{id}",
+                arguments = listOf(navArgument("id") { type = NavType.IntType })
+            ) { backStackEntry ->
+                val datasetId = backStackEntry.arguments?.getInt("id")
                 if (datasetId != null) {
-                    DatasetDetailScreen(navController, datasetId, viewModel)
-                } else {
-                    // fallback/error handling
+                    DatasetDetailScreen(navController, datasetId, datasetViewModel)
                 }
             }
-
-            // --- RUTE EDIT YANG SEBELUMNYA HILANG, DITAMBAHKAN DI SINI ---
             composable(
                 route = "editDataset/{datasetId}",
                 arguments = listOf(navArgument("datasetId") { type = NavType.IntType })
@@ -152,18 +178,21 @@ fun DigiBoxApp() {
                 if (datasetId != null) {
                     EditDatasetScreen(
                         navController = navController,
-                        viewModel = viewModel,
+                        viewModel = datasetViewModel,
                         datasetId = datasetId
                     )
                 }
             }
-            // -----------------------------------------------------------
         }
     }
 }
 
+@OptIn(ExperimentalComposeUiApi::class)
 @Composable
-fun DigiboxMobileUI(navController: NavController, isLoggedIn: Boolean) {
+fun DigiboxMobileUI(navController: NavController, isLoggedIn: Boolean, onProfileClick: () -> Unit) {
+    var localSearchQuery by remember { mutableStateOf("") }
+    val keyboardController = LocalSoftwareKeyboardController.current
+
     val bgGradient = Brush.verticalGradient(
         listOf(Color(0xFFA1D4CA), Color.White)
     )
@@ -186,23 +215,32 @@ fun DigiboxMobileUI(navController: NavController, isLoggedIn: Boolean) {
             )
             Icon(
                 imageVector = Icons.Default.AccountCircle,
-                contentDescription = null,
+                contentDescription = "Profile",
                 modifier = Modifier
                     .size(32.dp)
-                    .clickable { navController.navigate("login") }
+                    .clickable { onProfileClick() }
             )
         }
 
         Spacer(modifier = Modifier.height(16.dp))
 
         OutlinedTextField(
-            value = "",
-            onValueChange = {},
-            placeholder = { Text("Search") },
+            value = localSearchQuery,
+            onValueChange = { localSearchQuery = it },
+            placeholder = { Text("Search datasets...") },
             leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
             shape = RoundedCornerShape(20.dp),
             modifier = Modifier.fillMaxWidth(),
-            singleLine = true
+            singleLine = true,
+            keyboardOptions = KeyboardOptions.Default.copy(
+                imeAction = ImeAction.Search
+            ),
+            keyboardActions = KeyboardActions(
+                onSearch = {
+                    keyboardController?.hide()
+                    navController.navigate("datasetList?query=${localSearchQuery}")
+                }
+            )
         )
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -246,7 +284,7 @@ fun DigiboxMobileUI(navController: NavController, isLoggedIn: Boolean) {
         }
 
         Spacer(modifier = Modifier.height(24.dp))
-        SectionRow("All Dataset") { navController.navigate("dataset") }
+        SectionRow("All Dataset") { navController.navigate("datasetList?query=") }
         Spacer(modifier = Modifier.height(8.dp))
         DatasetRow()
 
