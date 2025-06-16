@@ -48,15 +48,18 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.example.digiboxtest.ui.theme.ContributorDetailScreen
 import com.example.digiboxtest.ui.theme.CreateDatasetScreen
 import com.example.digiboxtest.ui.theme.DatasetCollectionScreen
 import com.example.digiboxtest.ui.theme.DatasetDetailScreen
 import com.example.digiboxtest.ui.theme.DatasetListScreen
 import com.example.digiboxtest.ui.theme.DatasetMetadataScreen
+import com.example.digiboxtest.ui.theme.EditDatasetScreen
 import com.example.digiboxtest.ui.theme.LoginScreen
 import com.example.digiboxtest.ui.theme.SignUpScreen
 import com.example.digiboxtest.ui.theme.UserPreferences
@@ -117,13 +120,13 @@ fun DigiBoxApp() {
             }
             composable("createDataset") {
                 if (isLoggedIn) {
-                    CreateDatasetScreen(navController)
+                    CreateDatasetScreen(navController, viewModel)
                 } else {
                     navController.navigate("login")
                 }
             }
             composable("contributorDetail") {
-                ContributorDetailScreen(navController)
+                ContributorDetailScreen(navController, viewModel)
             }
             composable("datasetMetadata") {
                 DatasetMetadataScreen(navController, viewModel)
@@ -139,11 +142,25 @@ fun DigiBoxApp() {
                     // fallback/error handling
                 }
             }
+
+            // --- RUTE EDIT YANG SEBELUMNYA HILANG, DITAMBAHKAN DI SINI ---
+            composable(
+                route = "editDataset/{datasetId}",
+                arguments = listOf(navArgument("datasetId") { type = NavType.IntType })
+            ) { backStackEntry ->
+                val datasetId = backStackEntry.arguments?.getInt("datasetId")
+                if (datasetId != null) {
+                    EditDatasetScreen(
+                        navController = navController,
+                        viewModel = viewModel,
+                        datasetId = datasetId
+                    )
+                }
             }
-
+            // -----------------------------------------------------------
         }
-
-        }
+    }
+}
 
 @Composable
 fun DigiboxMobileUI(navController: NavController, isLoggedIn: Boolean) {

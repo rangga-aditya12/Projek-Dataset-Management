@@ -1,72 +1,101 @@
 package com.example.digiboxtest.ui.theme
 
+import android.content.Context
+import android.net.Uri
+import android.provider.OpenableColumns
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AccountCircle
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import coil.compose.rememberAsyncImagePainter
 import com.example.digiboxtest.R
-import com.example.digiboxtest.database.DatasetEntity
+import com.example.digiboxtest.components.ImagePickerButton
 import com.example.digiboxtest.viewmodel.DatasetRoomViewModel
+
+// Fungsi bantuan untuk mendapatkan nama file dari URI dengan lebih andal
+private fun getFileName(uri: Uri, context: Context): String {
+    var result: String? = null
+    if (uri.scheme == "content") {
+        val cursor = context.contentResolver.query(uri, null, null, null, null)
+        try {
+            if (cursor != null && cursor.moveToFirst()) {
+                val displayNameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
+                if (displayNameIndex != -1) {
+                    result = cursor.getString(displayNameIndex)
+                }
+            }
+        } finally {
+            cursor?.close()
+        }
+    }
+    if (result == null) {
+        result = uri.path
+        val cut = result?.lastIndexOf('/')
+        if (cut != null && cut != -1) {
+            result = result.substring(cut + 1)
+        }
+    }
+    return result ?: "Unknown file"
+}
+
 
 @Composable
 fun DatasetMetadataScreen(
     navController: NavController,
     viewModel: DatasetRoomViewModel
 ) {
-    val bgGradient = Brush.verticalGradient(colors = listOf(Color(0xFFA1D4CA), Color.White))
+    val context = LocalContext.current // Dapatkan context untuk digunakan di helper
+    val bgGradient = androidx.compose.ui.graphics.Brush.verticalGradient(
+        colors = listOf(Color(0xFFA1D4CA), Color.White)
+    )
 
-    var title by remember { mutableStateOf("") }
-    var description by remember { mutableStateOf("") }
-    var rowCount by remember { mutableStateOf("") }
-    var featureCount by remember { mutableStateOf("") }
-    var keywords by remember { mutableStateOf("") }
-    var fileSelected by remember { mutableStateOf("Pilih File") }
+    var datasetFileName by remember { mutableStateOf("No file chosen") }
+    var profileImageFileName by remember { mutableStateOf("No file chosen") }
 
+    val csvPickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        uri?.let {
+            viewModel.newDatasetFileUri = it
+            datasetFileName = getFileName(it, context) // Gunakan helper untuk nama file
+            viewModel.processCsvFile(it)
+        }
+    }
 
     Box(
         modifier = Modifier
             .fillMaxSize()
             .background(bgGradient)
     ) {
-        Column(modifier = Modifier.padding(24.dp)) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(24.dp)
+                .verticalScroll(rememberScrollState()),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
 
-            // Header
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Image(
-                        painter = painterResource(id = R.drawable.logo),
-                        contentDescription = null,
-                        modifier = Modifier.size(40.dp)
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text("DigiBox", fontWeight = FontWeight.Bold, fontSize = 20.sp, color = Color.White)
-                }
-                Icon(
-                    imageVector = Icons.Default.AccountCircle,
-                    contentDescription = null,
-                    modifier = Modifier.size(32.dp),
-                    tint = Color.White
-                )
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
+            Image(
+                painter = painterResource(id = R.drawable.logo),
+                contentDescription = "DigiBox Logo",
+                modifier = Modifier.size(80.dp)
+            )
+            Spacer(modifier = Modifier.height(24.dp))
 
             Text(
                 "Mulai Proyek Anda dengan Dataset Baru",
@@ -75,37 +104,74 @@ fun DatasetMetadataScreen(
                 color = Color(0xFF0D124B)
             )
             Text(
-                "Buat dataset baru untuk dianalisis, dibagikan, atau digunakan dalam model Anda dengan mudah dan efisien sesuai dengan kebutuhan anda.",
+                "Lengkapi detail dan unggah file yang diperlukan untuk membuat dataset baru Anda.",
                 fontSize = 13.sp,
-                color = Color.Black
+                color = Color.Black,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.padding(horizontal = 16.dp)
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(24.dp))
 
-            Text("Informasi Dataset", fontWeight = FontWeight.Bold)
-            Spacer(modifier = Modifier.height(12.dp))
-
-            // Input Fields
-            DatasetTextField("1. Nama Dataset", title) { title = it }
-            DatasetTextField("2. Deskripsi Dataset", description) { description = it }
-
-            Text("3. File Dataset")
-            Button(
-                onClick = { /* file picker */ },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 4.dp),
-                shape = RoundedCornerShape(50),
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFBDBDBD))
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalAlignment = Alignment.Start
             ) {
-                Text(fileSelected, color = Color.White)
+                // 1. File Dataset Picker
+                Text("1. File Dataset (hanya .CSV)", fontSize = 14.sp)
+                // --- PERUBAHAN DI SINI ---
+                // Mengizinkan semua jenis file agar CSV pasti bisa dipilih
+                Button(onClick = { csvPickerLauncher.launch("*/*") }) {
+                    Text("Choose File")
+                }
+                Text(datasetFileName, fontSize = 12.sp, color = Color.Gray)
+
+                if (viewModel.newDatasetRowCount > 0 || viewModel.newDatasetFeatureCount > 0) {
+                    Text(
+                        "Detected: ${viewModel.newDatasetRowCount} rows, ${viewModel.newDatasetFeatureCount} features",
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = Color(0xFF0D47A1),
+                        modifier = Modifier.padding(top = 4.dp)
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // 2. Profil Dataset Picker
+                Text("2. Profil Dataset (Gambar)", fontSize = 14.sp)
+                ImagePickerButton(onImagePicked = { uri ->
+                    uri?.let {
+                        viewModel.newDatasetProfileImageUri = it
+                        profileImageFileName = getFileName(it, context)
+                    }
+                })
+
+                viewModel.newDatasetProfileImageUri?.let {
+                    Spacer(Modifier.height(8.dp))
+                    Image(
+                        painter = rememberAsyncImagePainter(it),
+                        contentDescription = "Profile Image Preview",
+                        modifier = Modifier
+                            .size(100.dp)
+                            .align(Alignment.CenterHorizontally)
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // 3. Jadikan Publik Checkbox
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Checkbox(
+                        checked = viewModel.newDatasetIsPublic,
+                        onCheckedChange = { viewModel.newDatasetIsPublic = it }
+                    )
+                    Text("Jadikan dataset ini publik (bisa dilihat semua user)")
+                }
             }
 
-            DatasetTextField("4. Jumlah Baris (Row)", rowCount) { rowCount = it }
-            DatasetTextField("5. Jumlah Fitur", featureCount) { featureCount = it }
-            DatasetTextField("6. Kata Kunci", keywords) { keywords = it }
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(32.dp))
 
             // Buttons
             Row(
@@ -114,54 +180,21 @@ fun DatasetMetadataScreen(
             ) {
                 Button(
                     onClick = { navController.popBackStack() },
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2D2E34))
+                    colors = ButtonDefaults.buttonColors(containerColor = Color.Gray)
                 ) {
-                    Text("Back", color = Color.White)
+                    Text("Kembali", color = Color.White)
                 }
 
                 Button(
                     onClick = {
-                        // NOTE: You should pass the real data from your input states.
-                        // These are examples.
-                        val creatorName = "Lionel Maxim, Enzo Rossi"
-                        val verifierName = "Rodri Dor"
-                        val categoryName = "Klasifikasi, Computer Vision"
-
-                        viewModel.addDataset(
-                            DatasetEntity(
-                                title = title,
-                                description = description,
-                                lastUpdate = "Just now",
-                                rowCount = rowCount.toIntOrNull() ?: 0,
-                                featureCount = featureCount.toIntOrNull() ?: 0,
-                                keywords = keywords,
-                                profileImageUri = null, // Replace with the actual image URI if you have it
-                                // Add the new fields here
-                                category = categoryName,
-                                creator = creatorName,
-                                verifier = verifierName
-                            )
-                        )
-                        navController.navigate("datasetList")
+                        viewModel.submitNewDataset()
+                        navController.navigate("datasetList") {
+                            popUpTo("home")
+                        }
                     },
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2D2E34))
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF0D124B))
                 ) {
                     Text("Submit", color = Color.White)
-                }
-            }
-
-            Spacer(modifier = Modifier.height(32.dp))
-
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(Color(0xFF0D124B), shape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp))
-                    .padding(vertical = 12.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text("DigiBox", color = Color.White, fontWeight = FontWeight.Bold)
-                    Text("About us", color = Color.White, fontSize = 12.sp)
                 }
             }
         }
