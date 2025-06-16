@@ -1,5 +1,6 @@
 package com.example.digiboxtest.ui.theme
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -14,6 +15,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -46,6 +49,11 @@ fun EditDatasetScreen(
         }
     }
 
+    // NEW: Definisikan gradien warna yang sama seperti halaman lainnya
+    val bgGradient = Brush.verticalGradient(
+        colors = listOf(Color(0xFFA1D4CA), Color.White)
+    )
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -55,20 +63,22 @@ fun EditDatasetScreen(
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back")
                     }
                 },
-                // --- BAGIAN YANG DIPERBAIKI ---
-                // Menambahkan definisi warna secara eksplisit untuk stabilitas
+                // UPDATED: Warna TopAppBar dibuat transparan agar latar belakang gradien terlihat
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    titleContentColor = MaterialTheme.colorScheme.onPrimary,
-                    navigationIconContentColor = MaterialTheme.colorScheme.onPrimary
+                    containerColor = Color.Transparent,
+                    titleContentColor = Color.Black, // Pastikan teks dan ikon tetap terlihat
+                    navigationIconContentColor = Color.Black
                 )
-                // -----------------------------
             )
-        }
+        },
+        // NEW: Atur warna kontainer Scaffold menjadi transparan juga
+        containerColor = Color.Transparent
     ) { paddingValues ->
         Column(
             modifier = Modifier
-                .padding(paddingValues)
+                .fillMaxSize() // NEW: Penuhi seluruh layar
+                .background(bgGradient) // NEW: Terapkan gradien di sini
+                .padding(paddingValues) // Terapkan padding dari Scaffold (untuk TopAppBar)
                 .padding(16.dp)
                 .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally
