@@ -12,6 +12,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.digiboxtest.database.AppDatabase
 import com.example.digiboxtest.database.DatasetEntity
 import com.example.digiboxtest.database.DatasetRepository
+import com.example.digiboxtest.utils.copyFileToInternalStorage
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
@@ -47,19 +48,26 @@ class DatasetRoomViewModel(application: Application) : AndroidViewModel(applicat
         }
     }
 
-    // --- FUNGSI BARU UNTUK MEMPROSES FILE CSV ---
+    // --- FUNGSI UNTUK MEMPROSES FILE CSV ---
     fun processCsvFile(uri: Uri) {
-        // Jalankan di thread IO agar tidak memblokir UI
+        // Langsung salin file ke penyimpanan internal untuk mendapatkan URI permanen
+        val permanentUri = copyFileToInternalStorage(getApplication(), uri)
+        if (permanentUri == null) {
+            // TODO: Handle error, misalnya dengan menampilkan Toast atau pesan di UI
+            println("Error: Failed to copy file to internal storage.")
+            return
+        }
+        // Simpan URI permanen dari salinan file internal ke dalam state
+        newDatasetFileUri = permanentUri
+
+        // Jalankan di thread IO untuk membaca metadata file (jumlah baris/fitur)
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                // Gunakan ContentResolver untuk membuka stream dari URI
+                // Gunakan URI asli untuk membaca metadata
                 getApplication<Application>().contentResolver.openInputStream(uri)?.use { inputStream ->
                     val reader = inputStream.bufferedReader()
-                    // Baca baris pertama sebagai header untuk menghitung fitur
                     val header = reader.readLine()
                     val features = header?.split(',')?.size ?: 0
-
-                    // Hitung sisa barisnya
                     val rows = reader.readLines().size
 
                     // Update state di thread utama
@@ -78,7 +86,6 @@ class DatasetRoomViewModel(application: Application) : AndroidViewModel(applicat
             }
         }
     }
-    // ---------------------------------------------
 
     fun submitNewDataset() {
         viewModelScope.launch {
@@ -86,14 +93,15 @@ class DatasetRoomViewModel(application: Application) : AndroidViewModel(applicat
                 title = newDatasetTitle,
                 description = newDatasetDescription,
                 lastUpdate = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date()),
-                // Gunakan hasil hitungan dari state
                 rowCount = newDatasetRowCount,
                 featureCount = newDatasetFeatureCount,
                 keywords = newDatasetCategory,
                 profileImageUri = newDatasetProfileImageUri?.toString(),
                 category = newDatasetCategory,
                 creator = newDatasetCreator,
-                verifier = newDatasetVerifier
+                verifier = newDatasetVerifier,
+                // Pastikan URI yang disimpan adalah URI permanen
+                fileUri = newDatasetFileUri?.toString()
             )
             repo.insert(newEntity)
             _datasetList.clear()
@@ -112,12 +120,10 @@ class DatasetRoomViewModel(application: Application) : AndroidViewModel(applicat
         newDatasetFileUri = null
         newDatasetProfileImageUri = null
         newDatasetIsPublic = false
-        // Reset juga state hitungan
         newDatasetRowCount = 0
         newDatasetFeatureCount = 0
     }
 
-    // ... (sisa fungsi add, delete, update)
     fun addDataset(dataset: DatasetEntity) {
         viewModelScope.launch {
             repo.insert(dataset)

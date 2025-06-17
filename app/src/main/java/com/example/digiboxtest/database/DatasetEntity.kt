@@ -13,8 +13,8 @@ data class DatasetEntity(
     val featureCount: Int,
     val keywords: String,
     val profileImageUri: String? = null,
-    // Add these new fields
     val category: String,
     val creator: String,
-    val verifier: String
+    val verifier: String,
+    val fileUri: String? // <-- TAMBAHKAN BARIS INI
 )
