@@ -7,5 +7,6 @@ import androidx.room.PrimaryKey
 data class UserEntity(
     @PrimaryKey
     val username: String,
-    val passwordHash: String // Di aplikasi nyata, selalu simpan hash password, bukan plain text
+    val passwordHash: String, // Di aplikasi nyata, selalu simpan hash password, bukan plain text
+    val profileImageUri: String? = null // <-- TAMBAHKAN BARIS INI
 )

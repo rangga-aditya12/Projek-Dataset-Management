@@ -5,7 +5,7 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 
-@Database(entities = [DatasetEntity::class, UserEntity::class], version = 5) // Versi dinaikkan, UserEntity ditambahkan
+@Database(entities = [DatasetEntity::class, UserEntity::class], version = 6) // Versi dinaikkan, UserEntity ditambahkan
 abstract class AppDatabase : RoomDatabase() {
     abstract fun datasetDao(): DatasetDao
     abstract fun userDao(): UserDao // Tambahkan abstract function untuk UserDao
