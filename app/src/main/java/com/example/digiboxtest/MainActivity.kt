@@ -203,97 +203,105 @@ fun DigiboxMobileUI(navController: NavController, isLoggedIn: Boolean, onProfile
             .background(bgGradient)
             .padding(16.dp)
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+        // Top section with header and search bar
+        Column(
+            modifier = Modifier.weight(1f) // Gives this column weight to push the footer down
         ) {
-            Image(
-                painter = painterResource(id = R.drawable.logo),
-                contentDescription = null,
-                modifier = Modifier.size(40.dp)
-            )
-            Icon(
-                imageVector = Icons.Default.AccountCircle,
-                contentDescription = "Profile",
-                modifier = Modifier
-                    .size(32.dp)
-                    .clickable { onProfileClick() }
-            )
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        OutlinedTextField(
-            value = localSearchQuery,
-            onValueChange = { localSearchQuery = it },
-            placeholder = { Text("Search datasets...") },
-            leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
-            shape = RoundedCornerShape(20.dp),
-            modifier = Modifier.fillMaxWidth(),
-            singleLine = true,
-            keyboardOptions = KeyboardOptions.Default.copy(
-                imeAction = ImeAction.Search
-            ),
-            keyboardActions = KeyboardActions(
-                onSearch = {
-                    keyboardController?.hide()
-                    navController.navigate("datasetList?query=${localSearchQuery}")
-                }
-            )
-        )
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        Row(verticalAlignment = Alignment.Top) {
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = "Jelajahi Dunia Data, Tanpa Batas",
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color(0xFF1A237E)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Image(
+                    painter = painterResource(id = R.drawable.logo),
+                    contentDescription = null,
+                    modifier = Modifier.size(40.dp)
                 )
-                Text(
-                    text = "Temukan dan akses beragam dataset berkualitas tinggi untuk mendukung riset, analisis, dan pengembangan teknologi. Dari data sains hingga kecerdasan buatan, semua tersedia dalam satu platform yang mudah digunakan.",
-                    fontSize = 13.sp
+                Icon(
+                    imageVector = Icons.Default.AccountCircle,
+                    contentDescription = "Profile",
+                    modifier = Modifier
+                        .size(32.dp)
+                        .clickable { onProfileClick() }
                 )
             }
-            Spacer(modifier = Modifier.width(8.dp))
-            Image(
-                painter = painterResource(id = R.drawable.logo),
-                contentDescription = null,
-                modifier = Modifier.size(40.dp)
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            OutlinedTextField(
+                value = localSearchQuery,
+                onValueChange = { localSearchQuery = it },
+                placeholder = { Text("Search datasets...") },
+                leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
+                shape = RoundedCornerShape(20.dp),
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true,
+                keyboardOptions = KeyboardOptions.Default.copy(
+                    imeAction = ImeAction.Search
+                ),
+                keyboardActions = KeyboardActions(
+                    onSearch = {
+                        keyboardController?.hide()
+                        navController.navigate("datasetList?query=${localSearchQuery}")
+                    }
+                )
             )
-        }
 
-        Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
-        Button(
-            onClick = {
-                if (isLoggedIn) {
-                    navController.navigate("createDataset")
-                } else {
-                    navController.navigate("login")
+            Row(verticalAlignment = Alignment.Top) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = "Jelajahi Dunia Data, Tanpa Batas",
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF1A237E)
+                    )
+                    Text(
+                        text = "Temukan dan akses beragam dataset berkualitas tinggi untuk mendukung riset, analisis, dan pengembangan teknologi. Dari data sains hingga kecerdasan buatan, semua tersedia dalam satu platform yang mudah digunakan.",
+                        fontSize = 13.sp
+                    )
                 }
-            },
-            shape = RoundedCornerShape(20.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFE0F2F1)),
-            modifier = Modifier.align(Alignment.CenterHorizontally)
-        ) {
-            Text("Create Dataset", color = Color.Black)
+                Spacer(modifier = Modifier.width(8.dp))
+                Image(
+                    painter = painterResource(id = R.drawable.logo),
+                    contentDescription = null,
+                    modifier = Modifier.size(40.dp)
+                )
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            Button(
+                onClick = {
+                    if (isLoggedIn) {
+                        navController.navigate("createDataset")
+                    } else {
+                        navController.navigate("login")
+                    }
+                },
+                shape = RoundedCornerShape(20.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFE0F2F1)),
+                modifier = Modifier.align(Alignment.CenterHorizontally)
+            ) {
+                Text("Create Dataset", color = Color.Black)
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+            SectionRow("All Dataset") { navController.navigate("datasetList?query=") }
+            Spacer(modifier = Modifier.height(8.dp))
+            DatasetRow()
+
+            Spacer(modifier = Modifier.height(24.dp))
+            SectionRow("Last View") { }
+            Spacer(modifier = Modifier.height(8.dp))
+            DatasetRow()
+
+            // A spacer with weight to push the content up and footer down
+            Spacer(modifier = Modifier.weight(1f))
         }
 
-        Spacer(modifier = Modifier.height(24.dp))
-        SectionRow("All Dataset") { navController.navigate("datasetList?query=") }
-        Spacer(modifier = Modifier.height(8.dp))
-        DatasetRow()
-
-        Spacer(modifier = Modifier.height(24.dp))
-        SectionRow("Last View") { }
-        Spacer(modifier = Modifier.height(8.dp))
-        DatasetRow()
-
-        Spacer(modifier = Modifier.height(32.dp))
+        // Footer section
         Box(
             modifier = Modifier
                 .fillMaxWidth()
