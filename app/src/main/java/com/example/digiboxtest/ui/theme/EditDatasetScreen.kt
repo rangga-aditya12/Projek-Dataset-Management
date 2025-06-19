@@ -1,8 +1,11 @@
 package com.example.digiboxtest.ui.theme
 
+import android.net.Uri
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -15,12 +18,18 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import coil.compose.rememberAsyncImagePainter
+import com.example.digiboxtest.R
+import com.example.digiboxtest.components.ImagePickerButton
 import com.example.digiboxtest.viewmodel.DatasetRoomViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -36,6 +45,7 @@ fun EditDatasetScreen(
     var category by remember { mutableStateOf("") }
     var creator by remember { mutableStateOf("") }
     var verifier by remember { mutableStateOf("") }
+    var profileImageUri by remember { mutableStateOf<Uri?>(null) } // NEW: State for profile image URI
 
     // Mengambil data dataset yang akan diedit saat layar pertama kali dibuka
     LaunchedEffect(key1 = datasetId) {
@@ -46,10 +56,10 @@ fun EditDatasetScreen(
             category = dataset.category
             creator = dataset.creator
             verifier = dataset.verifier
+            profileImageUri = dataset.profileImageUri?.let { Uri.parse(it) } // NEW: Set initial image URI
         }
     }
 
-    // NEW: Definisikan gradien warna yang sama seperti halaman lainnya
     val bgGradient = Brush.verticalGradient(
         colors = listOf(Color(0xFFA1D4CA), Color.White)
     )
@@ -63,22 +73,20 @@ fun EditDatasetScreen(
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back")
                     }
                 },
-                // UPDATED: Warna TopAppBar dibuat transparan agar latar belakang gradien terlihat
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = Color.Transparent,
-                    titleContentColor = Color.Black, // Pastikan teks dan ikon tetap terlihat
+                    titleContentColor = Color.Black,
                     navigationIconContentColor = Color.Black
                 )
             )
         },
-        // NEW: Atur warna kontainer Scaffold menjadi transparan juga
         containerColor = Color.Transparent
     ) { paddingValues ->
         Column(
             modifier = Modifier
-                .fillMaxSize() // NEW: Penuhi seluruh layar
-                .background(bgGradient) // NEW: Terapkan gradien di sini
-                .padding(paddingValues) // Terapkan padding dari Scaffold (untuk TopAppBar)
+                .fillMaxSize()
+                .background(bgGradient)
+                .padding(paddingValues)
                 .padding(16.dp)
                 .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally
@@ -89,6 +97,36 @@ fun EditDatasetScreen(
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.padding(bottom = 24.dp)
             )
+
+            // NEW: Display current profile image and add ImagePickerButton
+            if (profileImageUri != null) {
+                Image(
+                    painter = rememberAsyncImagePainter(profileImageUri),
+                    contentDescription = "Profile Image",
+                    modifier = Modifier
+                        .size(120.dp)
+                        .clip(CircleShape),
+                    contentScale = ContentScale.Crop
+                )
+            } else {
+                Image(
+                    painter = painterResource(id = R.drawable.logo),
+                    contentDescription = "Default Profile Image",
+                    modifier = Modifier
+                        .size(120.dp)
+                        .clip(CircleShape),
+                    contentScale = ContentScale.Crop
+                )
+            }
+            Spacer(Modifier.height(16.dp))
+
+            // NEW: Image Picker Button
+            Text("Edit Profil Dataset (Gambar)", fontSize = 14.sp)
+            ImagePickerButton(onImagePicked = { uri ->
+                profileImageUri = uri // Update the state with the new URI
+            })
+
+            Spacer(Modifier.height(16.dp))
 
             DatasetTextField(label = "Nama Dataset", value = title, onValueChange = { title = it })
             Spacer(Modifier.height(8.dp))
@@ -110,12 +148,13 @@ fun EditDatasetScreen(
                             title = title,
                             description = description,
                             category = category,
-                            keywords = category, // Sesuaikan jika perlu
+                            keywords = category,
                             creator = creator,
-                            verifier = verifier
+                            verifier = verifier,
+                            profileImageUri = profileImageUri?.toString() // NEW: Update profile image URI
                         )
                         viewModel.updateDataset(updatedDataset)
-                        navController.popBackStack() // Kembali ke layar detail setelah menyimpan
+                        navController.popBackStack()
                     }
                 },
                 modifier = Modifier
