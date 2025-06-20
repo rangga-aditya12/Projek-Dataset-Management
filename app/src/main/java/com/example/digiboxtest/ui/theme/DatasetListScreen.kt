@@ -18,13 +18,16 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -52,6 +55,11 @@ fun DatasetListScreen(
     initialQuery: String = ""
 ) {
     var searchQuery by remember { mutableStateOf(initialQuery) }
+
+    // --- PERUBAHAN 1: Tambahkan state untuk dialog ---
+    var showDialog by remember { mutableStateOf(false) }
+    var datasetToDelete by remember { mutableStateOf<DatasetEntity?>(null) }
+
 
     val filteredDatasetList = remember(searchQuery, viewModel.datasetList) {
         if (searchQuery.isBlank()) {
@@ -104,15 +112,62 @@ fun DatasetListScreen(
                         onEditClick = {
                             navController.navigate("editDataset/${dataset.id}")
                         },
+                        // --- PERUBAHAN 2: Ubah aksi onClick ---
                         onDeleteClick = {
-                            viewModel.deleteDataset(dataset)
+                            // Simpan data yang akan dihapus dan tampilkan dialog
+                            datasetToDelete = dataset
+                            showDialog = true
                         }
                     )
                 }
             }
         }
     }
+
+    // --- PERUBAHAN 3: Tambahkan AlertDialog di sini ---
+    if (showDialog) {
+        AlertDialog(
+            onDismissRequest = {
+                // Tutup dialog jika pengguna mengklik di luar area dialog
+                showDialog = false
+            },
+            title = {
+                Text(text = "Konfirmasi Hapus")
+            },
+            text = {
+                Text(text = "Apakah Anda yakin ingin menghapus dataset \"${datasetToDelete?.title}\"? Tindakan ini tidak dapat dibatalkan.")
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        // Jika dikonfirmasi, panggil fungsi hapus dari ViewModel
+                        datasetToDelete?.let {
+                            viewModel.deleteDataset(it)
+                        }
+                        showDialog = false
+                    },
+                    // Beri warna merah untuk menandakan aksi berbahaya
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.error
+                    )
+                ) {
+                    Text("Hapus")
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = {
+                        // Tutup dialog jika dibatalkan
+                        showDialog = false
+                    }
+                ) {
+                    Text("Batal")
+                }
+            }
+        )
+    }
 }
+
 
 @Composable
 fun DatasetCard(
