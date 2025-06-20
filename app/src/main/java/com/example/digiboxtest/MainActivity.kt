@@ -23,6 +23,7 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
+import androidx.compose.material.icons.filled.Inbox
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -63,6 +64,7 @@ import com.example.digiboxtest.ui.theme.CreateDatasetScreen
 import com.example.digiboxtest.ui.theme.DatasetDetailScreen
 import com.example.digiboxtest.ui.theme.DatasetListScreen
 import com.example.digiboxtest.ui.theme.DatasetMetadataScreen
+import com.example.digiboxtest.ui.theme.DatasetRequestsScreen
 import com.example.digiboxtest.ui.theme.EditDatasetScreen
 import com.example.digiboxtest.ui.theme.LoginScreen
 import com.example.digiboxtest.ui.theme.ProfileScreen
@@ -183,6 +185,10 @@ fun DigiBoxApp() {
                     )
                 }
             }
+            // New route for Dataset Requests
+            composable("datasetRequests") {
+                DatasetRequestsScreen(navController = navController)
+            }
         }
     }
 }
@@ -217,13 +223,23 @@ fun DigiboxMobileUI(navController: NavController, isLoggedIn: Boolean, onProfile
                     contentDescription = null,
                     modifier = Modifier.size(40.dp)
                 )
-                Icon(
-                    imageVector = Icons.Default.AccountCircle,
-                    contentDescription = "Profile",
-                    modifier = Modifier
-                        .size(32.dp)
-                        .clickable { onProfileClick() }
-                )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        imageVector = Icons.Default.Inbox,
+                        contentDescription = "Dataset Requests",
+                        modifier = Modifier
+                            .size(32.dp)
+                            .clickable { navController.navigate("datasetRequests") }
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Icon(
+                        imageVector = Icons.Default.AccountCircle,
+                        contentDescription = "Profile",
+                        modifier = Modifier
+                            .size(32.dp)
+                            .clickable { onProfileClick() }
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.height(16.dp))
