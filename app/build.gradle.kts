@@ -1,3 +1,5 @@
+// In file: app/build.gradle.kts
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -17,10 +19,16 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        // Definisikan alamat API Anda di sini.
+        buildConfigField("String", "DATASET_REQUEST_API_URL", "\"https://your-api-domain.com/api/\"")
     }
 
     buildTypes {
         release {
+            // Anda bisa mendefinisikan URL yang berbeda untuk versi release
+            // buildConfigField("String", "DATASET_REQUEST_API_URL", "\"https://prod.your-api-domain.com/api/\"")
+
             isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
@@ -28,15 +36,21 @@ android {
             )
         }
     }
+
+    // Blok compileOptions yang sudah diperbaiki
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
+
     kotlinOptions {
         jvmTarget = "11"
     }
+
+    // Blok buildFeatures yang digabung menjadi satu
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 
@@ -51,6 +65,7 @@ dependencies {
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
     testImplementation(libs.junit)
+
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(platform(libs.androidx.compose.bom))

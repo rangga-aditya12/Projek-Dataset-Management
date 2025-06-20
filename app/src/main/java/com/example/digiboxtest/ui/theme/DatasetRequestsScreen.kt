@@ -18,12 +18,11 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.digiboxtest.R
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
+import com.example.digiboxtest.viewmodel.DatasetRequestsViewModel
 
-// Data class for a single request
 data class DatasetRequest(
     val id: Int,
     val title: String,
@@ -31,20 +30,21 @@ data class DatasetRequest(
     val date: String
 )
 
-// Mock data to simulate API response
 val mockRequests = listOf(
     DatasetRequest(1, "web manajemen proyek", "ariel", "19 Jun 2025, 02.56"),
     DatasetRequest(2, "Testing kirim pesan", "Tim Marketing", "18 Jun 2025, 06.17")
 )
 
 @Composable
-fun DatasetRequestsScreen(navController: NavController) {
-    var requests by remember { mutableStateOf(mockRequests) }
-    var message by remember { mutableStateOf("Tidak ada pesan baru untuk ditambahkan (semua data sudah ada).") }
-    val coroutineScope = rememberCoroutineScope()
-    var isLoading by remember { mutableStateOf(false) }
+fun DatasetRequestsScreen(
+    navController: NavController,
+    viewModel: DatasetRequestsViewModel = viewModel()
+) {
+    val requests by viewModel.requests.collectAsState()
+    val message by viewModel.message.collectAsState()
+    val isLoading by viewModel.isLoading.collectAsState()
 
-    val backgroundColor = Color(0xFFE4F5F8) // Light cyan/blue from image
+    val backgroundColor = Color(0xFFE4F5F8)
 
     Scaffold(
         topBar = {
@@ -71,7 +71,7 @@ fun DatasetRequestsScreen(navController: NavController) {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(Color(0xFF0D124B)) // Dark blue footer
+                    .background(Color(0xFF0D124B))
                     .padding(16.dp),
                 contentAlignment = Alignment.Center
             ) {
@@ -90,23 +90,17 @@ fun DatasetRequestsScreen(navController: NavController) {
                 .fillMaxSize()
         ) {
             Spacer(modifier = Modifier.height(16.dp))
+
             Text("Dataset Requests", fontSize = 24.sp, fontWeight = FontWeight.Bold)
             Spacer(modifier = Modifier.height(8.dp))
 
             Box(modifier = Modifier.fillMaxWidth()) {
                 Button(
-                    onClick = {
-                        isLoading = true
-                        message = "Mengambil data terbaru..."
-                        coroutineScope.launch {
-                            delay(2000) // Simulate network delay
-                            message = "Semua data sudah yang terbaru."
-                            isLoading = false
-                        }
-                    },
+                    onClick = { viewModel.fetchLatestRequests() },
+                    enabled = !isLoading,
                     modifier = Modifier.align(Alignment.CenterEnd),
                     shape = RoundedCornerShape(8.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4A90E2)) // Blue color from image
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4A90E2))
                 ) {
                     Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(18.dp))
                     Spacer(modifier = Modifier.width(4.dp))
@@ -115,7 +109,6 @@ fun DatasetRequestsScreen(navController: NavController) {
             }
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Message bar
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -133,7 +126,13 @@ fun DatasetRequestsScreen(navController: NavController) {
             } else {
                 LazyColumn(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     items(requests) { request ->
-                        RequestCard(request)
+                        RequestCard(
+                            request = request,
+                            onReplyClick = {
+                                // Navigasi ke halaman ReplyScreen dengan membawa ID dan Judul
+                                navController.navigate("reply/${request.id}/${request.title}")
+                            }
+                        )
                     }
                 }
             }
@@ -142,7 +141,7 @@ fun DatasetRequestsScreen(navController: NavController) {
 }
 
 @Composable
-fun RequestCard(request: DatasetRequest) {
+fun RequestCard(request: DatasetRequest, onReplyClick: () -> Unit) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(12.dp),
@@ -169,7 +168,7 @@ fun RequestCard(request: DatasetRequest) {
                 horizontalArrangement = Arrangement.spacedBy(6.dp)
             ) {
                 Button(
-                    onClick = { /* TODO: Implement View Details */ },
+                    onClick = { /* TODO: Implementasi logika view details */ },
                     shape = RoundedCornerShape(8.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF333333)),
                     contentPadding = PaddingValues(horizontal = 12.dp)
@@ -177,7 +176,7 @@ fun RequestCard(request: DatasetRequest) {
                     Text("View Details", fontSize = 12.sp, color = Color.White)
                 }
                 Button(
-                    onClick = { /* TODO: Implement Reply */ },
+                    onClick = onReplyClick,
                     shape = RoundedCornerShape(8.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4A90E2)),
                     contentPadding = PaddingValues(horizontal = 16.dp)

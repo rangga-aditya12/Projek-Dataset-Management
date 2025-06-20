@@ -68,6 +68,7 @@ import com.example.digiboxtest.ui.theme.DatasetRequestsScreen
 import com.example.digiboxtest.ui.theme.EditDatasetScreen
 import com.example.digiboxtest.ui.theme.LoginScreen
 import com.example.digiboxtest.ui.theme.ProfileScreen
+import com.example.digiboxtest.ui.theme.ReplyScreen
 import com.example.digiboxtest.ui.theme.SignUpScreen
 import com.example.digiboxtest.ui.theme.UserPreferences
 import com.example.digiboxtest.viewmodel.DatasetRoomViewModel
@@ -185,9 +186,24 @@ fun DigiBoxApp() {
                     )
                 }
             }
-            // New route for Dataset Requests
+            // Rute untuk halaman daftar request
             composable("datasetRequests") {
                 DatasetRequestsScreen(navController = navController)
+            }
+
+            // Rute untuk halaman balas pesan
+            composable(
+                route = "reply/{requestId}/{projectTitle}",
+                arguments = listOf(
+                    navArgument("requestId") { type = NavType.IntType },
+                    navArgument("projectTitle") { type = NavType.StringType }
+                )
+            ) { backStackEntry ->
+                val projectTitle = backStackEntry.arguments?.getString("projectTitle") ?: "Unknown"
+                ReplyScreen(
+                    navController = navController,
+                    projectTitle = projectTitle
+                )
             }
         }
     }
@@ -209,9 +225,8 @@ fun DigiboxMobileUI(navController: NavController, isLoggedIn: Boolean, onProfile
             .background(bgGradient)
             .padding(16.dp)
     ) {
-        // Top section with header and search bar
         Column(
-            modifier = Modifier.weight(1f) // Gives this column weight to push the footer down
+            modifier = Modifier.weight(1f)
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -223,6 +238,7 @@ fun DigiboxMobileUI(navController: NavController, isLoggedIn: Boolean, onProfile
                     contentDescription = null,
                     modifier = Modifier.size(40.dp)
                 )
+                // Baris untuk ikon inbox dan profil
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
                         imageVector = Icons.Default.Inbox,
@@ -313,11 +329,9 @@ fun DigiboxMobileUI(navController: NavController, isLoggedIn: Boolean, onProfile
             Spacer(modifier = Modifier.height(8.dp))
             DatasetRow()
 
-            // A spacer with weight to push the content up and footer down
             Spacer(modifier = Modifier.weight(1f))
         }
 
-        // Footer section
         Box(
             modifier = Modifier
                 .fillMaxWidth()
