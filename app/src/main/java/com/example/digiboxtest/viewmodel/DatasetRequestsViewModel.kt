@@ -1,9 +1,11 @@
+// File: app/src/main/java/com/example/digiboxtest/viewmodel/DatasetRequestsViewModel.kt
 package com.example.digiboxtest.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.digiboxtest.BuildConfig
 import com.example.digiboxtest.ui.theme.DatasetRequest
+import com.example.digiboxtest.ui.theme.DetailedDatasetRequest // <-- Tambahkan import ini
 import com.example.digiboxtest.ui.theme.mockRequests
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -90,5 +92,27 @@ class DatasetRequestsViewModel : ViewModel() {
                 _isLoading.value = false
             }
         }
+    }
+
+    /**
+     * [BARU] Fungsi untuk mendapatkan detail permintaan palsu berdasarkan ID.
+     * Di aplikasi nyata, ini akan mengambil data dari API atau database.
+     */
+    fun getRequestDetails(id: Int): DetailedDatasetRequest {
+        // Data palsu untuk demonstrasi
+        return DetailedDatasetRequest(
+            id = id,
+            projectName = "web manajemen proyek",
+            problemDescription = "Membuat aplikasi Manajemen Proyek berbasis django untuk melengkapi tugas semester 4",
+            target = "biar lulus semester 4 aja",
+            dataType = "data log",
+            processingActivity = "normalisasi",
+            featureCount = 4,
+            datasetSize = 1,
+            fileFormat = "CSV",
+            startDate = "Feb. 9, 2025",
+            endDate = "Aug. 29, 2028",
+            status = "Complete"
+        )
     }
 }

@@ -64,6 +64,7 @@ import com.example.digiboxtest.ui.theme.CreateDatasetScreen
 import com.example.digiboxtest.ui.theme.DatasetDetailScreen
 import com.example.digiboxtest.ui.theme.DatasetListScreen
 import com.example.digiboxtest.ui.theme.DatasetMetadataScreen
+import com.example.digiboxtest.ui.theme.DatasetRequestDetailScreen
 import com.example.digiboxtest.ui.theme.DatasetRequestsScreen
 import com.example.digiboxtest.ui.theme.EditDatasetScreen
 import com.example.digiboxtest.ui.theme.LoginScreen
@@ -71,6 +72,7 @@ import com.example.digiboxtest.ui.theme.ProfileScreen
 import com.example.digiboxtest.ui.theme.ReplyScreen
 import com.example.digiboxtest.ui.theme.SignUpScreen
 import com.example.digiboxtest.ui.theme.UserPreferences
+import com.example.digiboxtest.viewmodel.DatasetRequestsViewModel
 import com.example.digiboxtest.viewmodel.DatasetRoomViewModel
 import com.example.digiboxtest.viewmodel.UserViewModel
 import kotlinx.coroutines.launch
@@ -91,6 +93,7 @@ fun DigiBoxApp() {
     val userPreferences = remember { UserPreferences(context) }
     val datasetViewModel: DatasetRoomViewModel = viewModel()
     val userViewModel: UserViewModel = viewModel()
+    val requestsViewModel: DatasetRequestsViewModel = viewModel() // Inisialisasi ViewModel untuk request
 
     val isLoggedIn by userPreferences.isLoggedIn.collectAsState(initial = false)
     var loading by remember { mutableStateOf(true) }
@@ -188,7 +191,20 @@ fun DigiBoxApp() {
             }
             // Rute untuk halaman daftar request
             composable("datasetRequests") {
-                DatasetRequestsScreen(navController = navController)
+                DatasetRequestsScreen(navController = navController, viewModel = requestsViewModel)
+            }
+
+            // Rute untuk halaman detail request
+            composable(
+                route = "datasetRequestDetail/{requestId}",
+                arguments = listOf(navArgument("requestId") { type = NavType.IntType })
+            ) { backStackEntry ->
+                val requestId = backStackEntry.arguments?.getInt("requestId") ?: 0
+                val requestDetails = requestsViewModel.getRequestDetails(requestId)
+                DatasetRequestDetailScreen(
+                    navController = navController,
+                    request = requestDetails
+                )
             }
 
             // Rute untuk halaman balas pesan

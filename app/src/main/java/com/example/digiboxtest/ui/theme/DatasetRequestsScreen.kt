@@ -30,6 +30,22 @@ data class DatasetRequest(
     val date: String
 )
 
+// [BARU] Data class untuk halaman detail
+data class DetailedDatasetRequest(
+    val id: Int,
+    val projectName: String,
+    val problemDescription: String,
+    val target: String,
+    val dataType: String,
+    val processingActivity: String,
+    val featureCount: Int,
+    val datasetSize: Int,
+    val fileFormat: String,
+    val startDate: String,
+    val endDate: String,
+    val status: String
+)
+
 val mockRequests = listOf(
     DatasetRequest(1, "web manajemen proyek", "ariel", "19 Jun 2025, 02.56"),
     DatasetRequest(2, "Testing kirim pesan", "Tim Marketing", "18 Jun 2025, 06.17")
@@ -128,6 +144,10 @@ fun DatasetRequestsScreen(
                     items(requests) { request ->
                         RequestCard(
                             request = request,
+                            // [DIUBAH] Aksi klik untuk "View Details"
+                            onViewDetailsClick = {
+                                navController.navigate("datasetRequestDetail/${request.id}")
+                            },
                             onReplyClick = {
                                 // Navigasi ke halaman ReplyScreen dengan membawa ID dan Judul
                                 navController.navigate("reply/${request.id}/${request.title}")
@@ -141,7 +161,11 @@ fun DatasetRequestsScreen(
 }
 
 @Composable
-fun RequestCard(request: DatasetRequest, onReplyClick: () -> Unit) {
+fun RequestCard(
+    request: DatasetRequest,
+    onReplyClick: () -> Unit,
+    onViewDetailsClick: () -> Unit // [DIUBAH] Tambahkan parameter ini
+) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(12.dp),
@@ -168,7 +192,7 @@ fun RequestCard(request: DatasetRequest, onReplyClick: () -> Unit) {
                 horizontalArrangement = Arrangement.spacedBy(6.dp)
             ) {
                 Button(
-                    onClick = { /* TODO: Implementasi logika view details */ },
+                    onClick = onViewDetailsClick, // [DIUBAH] Gunakan handler baru
                     shape = RoundedCornerShape(8.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF333333)),
                     contentPadding = PaddingValues(horizontal = 12.dp)
