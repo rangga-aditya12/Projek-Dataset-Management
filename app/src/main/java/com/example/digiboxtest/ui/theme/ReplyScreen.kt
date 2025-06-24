@@ -23,7 +23,7 @@ fun ReplyScreen(
     projectTitle: String
 ) {
     // State untuk menampung input dari user
-    var downloadLink by remember { mutableStateOf("http://undr.io/pythonanywhe") }
+    var downloadLink by remember { mutableStateOf("https://undirty.pythonanywhere.com/api/dataset-reply/") }
     var replyMessage by remember { mutableStateOf("dataset sudah tersedia silahkan download") }
 
     // State untuk dropdown status

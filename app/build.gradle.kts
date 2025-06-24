@@ -21,7 +21,7 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
         // Definisikan alamat API Anda di sini.
-        buildConfigField("String", "DATASET_REQUEST_API_URL", "\"https://your-api-domain.com/api/\"")
+        buildConfigField("String", "DATASET_REQUEST_API_URL", "\"https://arlellll.pythonanywhere.com/\"")
     }
 
     buildTypes {

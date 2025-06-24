@@ -78,17 +78,40 @@ class DatasetRequestsViewModel : ViewModel() {
             _isLoading.value = true
 
             try {
-                val apiUrl = BuildConfig.DATASET_REQUEST_API_URL + "reply" // contoh endpoint
+                // Menggunakan URL dari BuildConfig dan endpoint yang benar.
+                val apiUrl = BuildConfig.DATASET_REQUEST_API_URL + "api-content/dataset-requests/"
 
-                // --- SIMULASI PEMANGGILAN API UNTUK REPLY ---
-                // TODO: Implementasikan logika untuk mengirim data balasan ke API di sini.
-                delay(1500)
+                // --- LOGIKA PEMANGGILAN API ---
+                // CATATAN: Kode di bawah ini adalah kerangka. Anda perlu menambahkan
+                // library seperti Retrofit atau Ktor untuk melakukan pemanggilan jaringan.
 
-                _message.value = "Balasan berhasil terkirim."
+                // Contoh dengan library HTTP client (misalnya Ktor, yang belum ada di proyek):
+                /*
+                val client = HttpClient(Android)
+                val response: HttpResponse = client.get(apiUrl)
+                val jsonBody = response.body<String>()
+
+                // Setelah mendapatkan JSON, Anda perlu mem-parsing-nya menjadi List<DatasetRequest>
+                // menggunakan library seperti Gson atau Kotlinx Serialization.
+                val newRequestsFromApi = parseJsonToDatasetRequests(jsonBody) // Fungsi parsing hipotetis
+
+                _requests.value = newRequestsFromApi
+                */
+
+                // Untuk saat ini, kita akan tetap menggunakan mock data untuk menunjukkan bahwa URL sudah benar,
+                // namun menandakan bahwa data perlu diambil dari API.
+                _message.value = "Mengambil data dari: $apiUrl"
+                delay(2000) // Simulasi jeda waktu jaringan
+
+                _requests.value = mockRequests // Ganti ini dengan hasil parsing dari API
+                _message.value = "Data berhasil diperbarui (dari mock data)."
+
 
             } catch (e: Exception) {
-                _message.value = "Gagal mengirim balasan: ${e.message}"
+                // Menangani jika terjadi error saat memanggil API
+                _message.value = "Gagal mengambil data: ${e.message}"
             } finally {
+                // Pastikan status loading kembali ke false setelah selesai (baik sukses maupun gagal)
                 _isLoading.value = false
             }
         }
