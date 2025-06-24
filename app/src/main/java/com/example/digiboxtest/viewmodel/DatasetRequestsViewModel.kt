@@ -5,7 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.digiboxtest.BuildConfig
 import com.example.digiboxtest.ui.theme.DatasetRequest
-import com.example.digiboxtest.ui.theme.DetailedDatasetRequest // <-- Tambahkan import ini
+import com.example.digiboxtest.ui.theme.DetailedDatasetRequest
 import com.example.digiboxtest.ui.theme.mockRequests
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -14,18 +14,21 @@ import kotlinx.coroutines.launch
 
 class DatasetRequestsViewModel : ViewModel() {
 
-    // State untuk daftar pesan/request. _requests bersifat privat dan bisa diubah.
+    // State untuk daftar pesan/request.
     private val _requests = MutableStateFlow<List<DatasetRequest>>(emptyList())
-    // requests bersifat publik dan hanya bisa dibaca (read-only) oleh UI.
     val requests = _requests.asStateFlow()
 
     // State untuk menampilkan pesan informasi di UI.
     private val _message = MutableStateFlow("Tekan tombol untuk mengambil pesan.")
     val message = _message.asStateFlow()
 
-    // State untuk status loading (menampilkan/menyembunyikan progress indicator).
+    // State untuk status loading.
     private val _isLoading = MutableStateFlow(false)
     val isLoading = _isLoading.asStateFlow()
+
+    // StateFlow baru untuk menyimpan hasil detail dari API
+    private val _selectedRequest = MutableStateFlow<DetailedDatasetRequest?>(null)
+    val selectedRequest = _selectedRequest.asStateFlow()
 
     init {
         // Memuat data awal saat ViewModel pertama kali dibuat
@@ -37,92 +40,62 @@ class DatasetRequestsViewModel : ViewModel() {
      * Fungsi ini dipanggil dari UI untuk mengambil data terbaru dari API.
      */
     fun fetchLatestRequests() {
-        // viewModelScope akan otomatis membatalkan coroutine ini jika ViewModel dihancurkan.
         viewModelScope.launch {
             _isLoading.value = true
             _message.value = "Mengambil data terbaru..."
 
             try {
-                // Menggunakan URL dari BuildConfig yang sudah kita atur sebelumnya.
-                val apiUrl = BuildConfig.DATASET_REQUEST_API_URL + "requests" // contoh endpoint
-
-                // --- SIMULASI PEMANGGILAN API ---
-                // TODO: Ganti bagian `delay` ini dengan logika pemanggilan API sesungguhnya
-                // menggunakan library seperti Retrofit atau Ktor.
-                delay(2000) // Simulasi jeda waktu jaringan
-
-                // Contoh hasil sukses:
-                // Misalkan API mengembalikan daftar request yang sama atau baru.
-                val newRequestsFromApi = mockRequests // Ganti dengan hasil dari API
-                _requests.value = newRequestsFromApi
-                _message.value = "Data berhasil diperbarui."
-
-            } catch (e: Exception) {
-                // Menangani jika terjadi error saat memanggil API
-                _message.value = "Gagal mengambil data: ${e.message}"
-            } finally {
-                // Pastikan status loading kembali ke false setelah selesai (baik sukses maupun gagal)
-                _isLoading.value = false
-            }
-        }
-    }
-
-    /**
-     * Fungsi ini bisa dipanggil dari UI untuk membalas pesan.
-     * @param requestId ID dari request yang akan dibalas.
-     * @param replyMessage Isi balasan.
-     */
-    fun replyToRequest(requestId: Int, replyMessage: String) {
-        viewModelScope.launch {
-            _message.value = "Mengirim balasan untuk request #$requestId..."
-            _isLoading.value = true
-
-            try {
                 // Menggunakan URL dari BuildConfig dan endpoint yang benar.
                 val apiUrl = BuildConfig.DATASET_REQUEST_API_URL + "api-content/dataset-requests/"
 
-                // --- LOGIKA PEMANGGILAN API ---
-                // CATATAN: Kode di bawah ini adalah kerangka. Anda perlu menambahkan
-                // library seperti Retrofit atau Ktor untuk melakukan pemanggilan jaringan.
-
-                // Contoh dengan library HTTP client (misalnya Ktor, yang belum ada di proyek):
-                /*
-                val client = HttpClient(Android)
-                val response: HttpResponse = client.get(apiUrl)
-                val jsonBody = response.body<String>()
-
-                // Setelah mendapatkan JSON, Anda perlu mem-parsing-nya menjadi List<DatasetRequest>
-                // menggunakan library seperti Gson atau Kotlinx Serialization.
-                val newRequestsFromApi = parseJsonToDatasetRequests(jsonBody) // Fungsi parsing hipotetis
-
-                _requests.value = newRequestsFromApi
-                */
-
-                // Untuk saat ini, kita akan tetap menggunakan mock data untuk menunjukkan bahwa URL sudah benar,
-                // namun menandakan bahwa data perlu diambil dari API.
+                // --- SIMULASI PEMANGGILAN API ---
+                // TODO: Ganti bagian ini dengan logika pemanggilan API sesungguhnya (misal: Retrofit/Ktor)
                 _message.value = "Mengambil data dari: $apiUrl"
                 delay(2000) // Simulasi jeda waktu jaringan
 
-                _requests.value = mockRequests // Ganti ini dengan hasil parsing dari API
+                // Ganti mockRequests dengan hasil parsing dari API
+                val newRequestsFromApi = mockRequests
+                _requests.value = newRequestsFromApi
                 _message.value = "Data berhasil diperbarui (dari mock data)."
 
-
             } catch (e: Exception) {
-                // Menangani jika terjadi error saat memanggil API
                 _message.value = "Gagal mengambil data: ${e.message}"
             } finally {
-                // Pastikan status loading kembali ke false setelah selesai (baik sukses maupun gagal)
                 _isLoading.value = false
             }
         }
     }
 
     /**
-     * [BARU] Fungsi untuk mendapatkan detail permintaan palsu berdasarkan ID.
-     * Di aplikasi nyata, ini akan mengambil data dari API atau database.
+     * Fungsi baru untuk mengambil detail dari API berdasarkan ID
      */
-    fun getRequestDetails(id: Int): DetailedDatasetRequest {
-        // Data palsu untuk demonstrasi
+    fun fetchRequestDetails(id: Int) {
+        viewModelScope.launch {
+            _isLoading.value = true
+            _selectedRequest.value = null // Kosongkan data sebelumnya
+
+            try {
+                // TODO: Ganti logika di bawah ini dengan pemanggilan API detail yang sesungguhnya.
+                // Contoh: val apiUrl = BuildConfig.DATASET_REQUEST_API_URL + "api-content/dataset-requests/$id"
+
+                // Untuk simulasi, kita pakai data palsu dengan jeda waktu
+                delay(1500) // Simulasi waktu tunggu jaringan
+                val detailsFromApi = getRequestDetails(id) // Menggunakan fungsi lama sebagai sumber data palsu
+
+                _selectedRequest.value = detailsFromApi
+
+            } catch (e: Exception) {
+                _message.value = "Gagal mengambil detail: ${e.message}"
+            } finally {
+                _isLoading.value = false
+            }
+        }
+    }
+
+    /**
+     * Fungsi ini sekarang hanya sebagai penyedia data palsu (mock) untuk simulasi.
+     */
+    private fun getRequestDetails(id: Int): DetailedDatasetRequest {
         return DetailedDatasetRequest(
             id = id,
             projectName = "web manajemen proyek",
@@ -137,5 +110,24 @@ class DatasetRequestsViewModel : ViewModel() {
             endDate = "Aug. 29, 2028",
             status = "Complete"
         )
+    }
+
+    /**
+     * Fungsi ini bisa dipanggil dari UI untuk membalas pesan.
+     * (Implementasi tidak diubah)
+     */
+    fun replyToRequest(requestId: Int, replyMessage: String) {
+        viewModelScope.launch {
+            _message.value = "Mengirim balasan untuk request #$requestId..."
+            _isLoading.value = true
+            try {
+                delay(1500)
+                _message.value = "Balasan berhasil terkirim."
+            } catch (e: Exception) {
+                _message.value = "Gagal mengirim balasan: ${e.message}"
+            } finally {
+                _isLoading.value = false
+            }
+        }
     }
 }

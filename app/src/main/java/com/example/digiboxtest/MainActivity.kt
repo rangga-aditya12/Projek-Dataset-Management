@@ -1,3 +1,4 @@
+// File: app/src/main/java/com/example/digiboxtest/MainActivity.kt
 package com.example.digiboxtest
 
 import android.os.Bundle
@@ -93,7 +94,7 @@ fun DigiBoxApp() {
     val userPreferences = remember { UserPreferences(context) }
     val datasetViewModel: DatasetRoomViewModel = viewModel()
     val userViewModel: UserViewModel = viewModel()
-    val requestsViewModel: DatasetRequestsViewModel = viewModel() // Inisialisasi ViewModel untuk request
+    val requestsViewModel: DatasetRequestsViewModel = viewModel()
 
     val isLoggedIn by userPreferences.isLoggedIn.collectAsState(initial = false)
     var loading by remember { mutableStateOf(true) }
@@ -109,6 +110,7 @@ fun DigiBoxApp() {
         }
     } else {
         NavHost(navController = navController, startDestination = if (isLoggedIn) "home" else "login") {
+            // ... (composable lain tidak diubah)
             composable("home") {
                 DigiboxMobileUI(navController, isLoggedIn) {
                     if (isLoggedIn) {
@@ -189,21 +191,28 @@ fun DigiBoxApp() {
                     )
                 }
             }
+
             // Rute untuk halaman daftar request
             composable("datasetRequests") {
                 DatasetRequestsScreen(navController = navController, viewModel = requestsViewModel)
             }
 
-            // Rute untuk halaman detail request
+            // [KODE YANG DIPERBARUI] Rute untuk halaman detail request
             composable(
                 route = "datasetRequestDetail/{requestId}",
                 arguments = listOf(navArgument("requestId") { type = NavType.IntType })
             ) { backStackEntry ->
                 val requestId = backStackEntry.arguments?.getInt("requestId") ?: 0
-                val requestDetails = requestsViewModel.getRequestDetails(requestId)
+
+                // Panggil fungsi baru untuk mengambil data saat halaman dibuka
+                LaunchedEffect(key1 = requestId) {
+                    requestsViewModel.fetchRequestDetails(requestId)
+                }
+
+                // Kirim ViewModel ke halaman detail, bukan data tunggal
                 DatasetRequestDetailScreen(
                     navController = navController,
-                    request = requestDetails
+                    viewModel = requestsViewModel
                 )
             }
 
@@ -225,6 +234,7 @@ fun DigiBoxApp() {
     }
 }
 
+// ... (composable DigiboxMobileUI, SectionRow, DatasetRow tidak diubah)
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun DigiboxMobileUI(navController: NavController, isLoggedIn: Boolean, onProfileClick: () -> Unit) {
