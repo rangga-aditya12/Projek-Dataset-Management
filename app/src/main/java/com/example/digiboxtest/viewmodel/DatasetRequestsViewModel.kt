@@ -1,91 +1,76 @@
-// File: app/src/main/java/com/example/digiboxtest/viewmodel/DatasetRequestsViewModel.kt
 package com.example.digiboxtest.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.digiboxtest.BuildConfig
+import com.example.digiboxtest.network.RetrofitInstance
 import com.example.digiboxtest.ui.theme.DatasetRequest
 import com.example.digiboxtest.ui.theme.DetailedDatasetRequest
-import com.example.digiboxtest.ui.theme.mockRequests
-import kotlinx.coroutines.delay
+import com.example.digiboxtest.ui.theme.ReplyRequestBody
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import retrofit2.HttpException
+import java.io.IOException
 
 class DatasetRequestsViewModel : ViewModel() {
 
-    // State untuk daftar pesan/request.
     private val _requests = MutableStateFlow<List<DatasetRequest>>(emptyList())
     val requests = _requests.asStateFlow()
 
-    // State untuk menampilkan pesan informasi di UI.
     private val _message = MutableStateFlow("Tekan tombol untuk mengambil pesan.")
     val message = _message.asStateFlow()
 
-    // State untuk status loading.
     private val _isLoading = MutableStateFlow(false)
     val isLoading = _isLoading.asStateFlow()
 
-    // StateFlow baru untuk menyimpan hasil detail dari API
     private val _selectedRequest = MutableStateFlow<DetailedDatasetRequest?>(null)
     val selectedRequest = _selectedRequest.asStateFlow()
 
     init {
-        // Memuat data awal saat ViewModel pertama kali dibuat
-        _requests.value = mockRequests
-        _message.value = "Tidak ada pesan baru untuk ditambahkan (semua data sudah ada)."
+        fetchLatestRequests()
     }
 
-    /**
-     * Fungsi ini dipanggil dari UI untuk mengambil data terbaru dari API.
-     */
     fun fetchLatestRequests() {
         viewModelScope.launch {
             _isLoading.value = true
-            _message.value = "Mengambil data terbaru..."
-
+            _message.value = "Mengambil data terbaru dari server..."
             try {
-                // Menggunakan URL dari BuildConfig dan endpoint yang benar.
-                val apiUrl = BuildConfig.DATASET_REQUEST_API_URL + "api-content/dataset-requests/"
-
-                // --- SIMULASI PEMANGGILAN API ---
-                // TODO: Ganti bagian ini dengan logika pemanggilan API sesungguhnya (misal: Retrofit/Ktor)
-                _message.value = "Mengambil data dari: $apiUrl"
-                delay(2000) // Simulasi jeda waktu jaringan
-
-                // Ganti mockRequests dengan hasil parsing dari API
-                val newRequestsFromApi = mockRequests
-                _requests.value = newRequestsFromApi
-                _message.value = "Data berhasil diperbarui (dari mock data)."
-
+                val response = RetrofitInstance.api.getDatasetRequests()
+                if (response.isSuccessful && response.body() != null) {
+                    _requests.value = response.body()!!
+                    _message.value = "Data berhasil diperbarui."
+                } else {
+                    _message.value = "Gagal mengambil data: ${response.message()}"
+                }
+            } catch (e: HttpException) {
+                _message.value = "Gagal mengambil data: Terjadi masalah pada server."
+            } catch (e: IOException) {
+                _message.value = "Gagal mengambil data: Periksa koneksi internet Anda."
             } catch (e: Exception) {
-                _message.value = "Gagal mengambil data: ${e.message}"
+                _message.value = "Gagal mengambil data: Terjadi kesalahan tidak terduga."
             } finally {
                 _isLoading.value = false
             }
         }
     }
 
-    /**
-     * Fungsi baru untuk mengambil detail dari API berdasarkan ID
-     */
     fun fetchRequestDetails(id: Int) {
         viewModelScope.launch {
             _isLoading.value = true
-            _selectedRequest.value = null // Kosongkan data sebelumnya
-
+            _selectedRequest.value = null
             try {
-                // TODO: Ganti logika di bawah ini dengan pemanggilan API detail yang sesungguhnya.
-                // Contoh: val apiUrl = BuildConfig.DATASET_REQUEST_API_URL + "api-content/dataset-requests/$id"
-
-                // Untuk simulasi, kita pakai data palsu dengan jeda waktu
-                delay(1500) // Simulasi waktu tunggu jaringan
-                val detailsFromApi = getRequestDetails(id) // Menggunakan fungsi lama sebagai sumber data palsu
-
-                _selectedRequest.value = detailsFromApi
-
+                val response = RetrofitInstance.api.getDatasetRequestDetail(id)
+                if (response.isSuccessful && response.body() != null) {
+                    _selectedRequest.value = response.body()
+                } else {
+                    _message.value = "Gagal mengambil detail: ${response.message()}"
+                }
+            } catch (e: HttpException) {
+                _message.value = "Gagal mengambil detail: Terjadi masalah pada server."
+            } catch (e: IOException) {
+                _message.value = "Gagal mengambil detail: Periksa koneksi internet Anda."
             } catch (e: Exception) {
-                _message.value = "Gagal mengambil detail: ${e.message}"
+                _message.value = "Gagal mengambil detail: Terjadi kesalahan tidak terduga."
             } finally {
                 _isLoading.value = false
             }
@@ -93,41 +78,37 @@ class DatasetRequestsViewModel : ViewModel() {
     }
 
     /**
-     * Fungsi ini sekarang hanya sebagai penyedia data palsu (mock) untuk simulasi.
+     * Mengirim balasan ke API. Dibuat sebagai 'suspend fun' yang mengembalikan Boolean
+     * untuk memberitahu UI apakah prosesnya berhasil atau tidak.
      */
-    private fun getRequestDetails(id: Int): DetailedDatasetRequest {
-        return DetailedDatasetRequest(
-            id = id,
-            projectName = "web manajemen proyek",
-            problemDescription = "Membuat aplikasi Manajemen Proyek berbasis django untuk melengkapi tugas semester 4",
-            target = "biar lulus semester 4 aja",
-            dataType = "data log",
-            processingActivity = "normalisasi",
-            featureCount = 4,
-            datasetSize = 1,
-            fileFormat = "CSV",
-            startDate = "Feb. 9, 2025",
-            endDate = "Aug. 29, 2028",
-            status = "Complete"
+    suspend fun sendReply(
+        replyUrl: String,
+        message: String,
+        downloadLink: String,
+        status: String
+    ): Boolean {
+        _message.value = "Mengirim balasan..."
+        _isLoading.value = true
+        val requestBody = ReplyRequestBody(
+            replyMessage = message,
+            downloadLink = downloadLink,
+            status = status
         )
-    }
-
-    /**
-     * Fungsi ini bisa dipanggil dari UI untuk membalas pesan.
-     * (Implementasi tidak diubah)
-     */
-    fun replyToRequest(requestId: Int, replyMessage: String) {
-        viewModelScope.launch {
-            _message.value = "Mengirim balasan untuk request #$requestId..."
-            _isLoading.value = true
-            try {
-                delay(1500)
+        return try {
+            val response = RetrofitInstance.api.sendReply(replyUrl, requestBody)
+            if (response.isSuccessful) {
                 _message.value = "Balasan berhasil terkirim."
-            } catch (e: Exception) {
-                _message.value = "Gagal mengirim balasan: ${e.message}"
-            } finally {
-                _isLoading.value = false
+                true // Kembalikan true jika sukses
+            } else {
+                _message.value = "Gagal mengirim balasan: Server merespons dengan kode ${response.code()}"
+                false // Kembalikan false jika gagal
             }
+        } catch (e: Exception) {
+            _message.value = "Gagal mengirim balasan: Periksa koneksi internet Anda."
+            e.printStackTrace()
+            false // Kembalikan false jika ada error
+        } finally {
+            _isLoading.value = false
         }
     }
 }

@@ -22,34 +22,92 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.digiboxtest.R
 import com.example.digiboxtest.viewmodel.DatasetRequestsViewModel
+import com.google.gson.annotations.SerializedName
 
+// --- DATA CLASS YANG SUDAH DIPERBAIKI TOTAL ---
+
+/**
+ * Data class utama yang merepresentasikan satu item dalam daftar JSON.
+ */
 data class DatasetRequest(
+    @SerializedName("id")
     val id: Int,
-    val title: String,
-    val sender: String,
-    val date: String
+
+    @SerializedName("project_detail")
+    val projectDetail: ProjectDetail?, // Objek di dalam JSON
+
+    @SerializedName("requested_by_detail")
+    val requestedBy: RequestedBy?, // Objek di dalam JSON
+
+    @SerializedName("created_at")
+    val date: String?
 )
 
-// [BARU] Data class untuk halaman detail
+/**
+ * Data class untuk objek "project_detail" di dalam JSON (untuk daftar).
+ */
+data class ProjectDetail(
+    @SerializedName("name")
+    val title: String?
+)
+
+/**
+ * Data class untuk objek "requested_by_detail" di dalam JSON.
+ */
+data class RequestedBy(
+    @SerializedName("username")
+    val sender: String?
+)
+
+/**
+ * Data class untuk halaman detail, sekarang strukturnya sama persis dengan JSON.
+ */
 data class DetailedDatasetRequest(
+    @SerializedName("id")
     val id: Int,
-    val projectName: String,
-    val problemDescription: String,
-    val target: String,
-    val dataType: String,
-    val processingActivity: String,
-    val featureCount: Int,
-    val datasetSize: Int,
-    val fileFormat: String,
-    val startDate: String,
-    val endDate: String,
-    val status: String
+
+    @SerializedName("project_detail")
+    val projectDetail: DetailedProjectInfo?, // Menggunakan data class baru untuk detail
+
+    @SerializedName("description_problem")
+    val problemDescription: String?,
+
+    @SerializedName("target_for_dataset")
+    val target: String?,
+
+    @SerializedName("type_data_needed")
+    val dataType: String?,
+
+    @SerializedName("data_processing_activity")
+    val processingActivity: String?,
+
+    @SerializedName("num_features")
+    val featureCount: Int?,
+
+    @SerializedName("dataset_size")
+    val datasetSize: String?,
+
+    @SerializedName("file_format")
+    val fileFormat: String?,
+
+    @SerializedName("start_date_needed")
+    val startDate: String?,
+
+    @SerializedName("end_date_needed")
+    val endDate: String?,
+
+    @SerializedName("status")
+    val status: String?
 )
 
-val mockRequests = listOf(
-    DatasetRequest(1, "web manajemen proyek", "ariel", "19 Jun 2025, 02.56"),
-    DatasetRequest(2, "Testing kirim pesan", "Tim Marketing", "18 Jun 2025, 06.17")
+/**
+ * Data class baru untuk menampung objek "project_detail" yang lebih lengkap di halaman detail.
+ */
+data class DetailedProjectInfo(
+    @SerializedName("name")
+    val name: String?
 )
+
 
 @Composable
 fun DatasetRequestsScreen(
@@ -106,10 +164,8 @@ fun DatasetRequestsScreen(
                 .fillMaxSize()
         ) {
             Spacer(modifier = Modifier.height(16.dp))
-
             Text("Dataset Requests", fontSize = 24.sp, fontWeight = FontWeight.Bold)
             Spacer(modifier = Modifier.height(8.dp))
-
             Box(modifier = Modifier.fillMaxWidth()) {
                 Button(
                     onClick = { viewModel.fetchLatestRequests() },
@@ -124,7 +180,6 @@ fun DatasetRequestsScreen(
                 }
             }
             Spacer(modifier = Modifier.height(16.dp))
-
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -134,7 +189,6 @@ fun DatasetRequestsScreen(
                 Text(text = message, color = Color.White, fontSize = 13.sp)
             }
             Spacer(modifier = Modifier.height(16.dp))
-
             if (isLoading) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     CircularProgressIndicator()
@@ -144,13 +198,12 @@ fun DatasetRequestsScreen(
                     items(requests) { request ->
                         RequestCard(
                             request = request,
-                            // [DIUBAH] Aksi klik untuk "View Details"
                             onViewDetailsClick = {
                                 navController.navigate("datasetRequestDetail/${request.id}")
                             },
                             onReplyClick = {
-                                // Navigasi ke halaman ReplyScreen dengan membawa ID dan Judul
-                                navController.navigate("reply/${request.id}/${request.title}")
+                                val title = request.projectDetail?.title ?: "Unknown"
+                                navController.navigate("reply/${request.id}/$title")
                             }
                         )
                     }
@@ -164,7 +217,7 @@ fun DatasetRequestsScreen(
 fun RequestCard(
     request: DatasetRequest,
     onReplyClick: () -> Unit,
-    onViewDetailsClick: () -> Unit // [DIUBAH] Tambahkan parameter ini
+    onViewDetailsClick: () -> Unit
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -180,10 +233,14 @@ fun RequestCard(
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Column(modifier = Modifier.weight(1f)) {
-                Text(request.title, fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
+                Text(
+                    text = request.projectDetail?.title ?: "Tanpa Judul",
+                    fontWeight = FontWeight.SemiBold,
+                    fontSize = 16.sp
+                )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    "Dari: ${request.sender} | Diterima: ${request.date}",
+                    text = "Dari: ${request.requestedBy?.sender ?: "-"} | Diterima: ${request.date ?: "-"}",
                     fontSize = 11.sp,
                     color = Color.Gray
                 )
@@ -192,7 +249,7 @@ fun RequestCard(
                 horizontalArrangement = Arrangement.spacedBy(6.dp)
             ) {
                 Button(
-                    onClick = onViewDetailsClick, // [DIUBAH] Gunakan handler baru
+                    onClick = onViewDetailsClick,
                     shape = RoundedCornerShape(8.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF333333)),
                     contentPadding = PaddingValues(horizontal = 12.dp)

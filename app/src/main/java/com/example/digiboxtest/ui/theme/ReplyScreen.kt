@@ -3,7 +3,9 @@ package com.example.digiboxtest.ui.theme
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -14,7 +16,19 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import com.example.digiboxtest.viewmodel.DatasetRequestsViewModel
+import kotlinx.coroutines.launch
+
+/**
+ * Data class untuk mendefinisikan body dari request API balasan.
+ */
+data class ReplyRequestBody(
+    val replyMessage: String,
+    val downloadLink: String,
+    val status: String
+)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -22,18 +36,16 @@ fun ReplyScreen(
     navController: NavController,
     projectTitle: String
 ) {
-    // State untuk menampung input dari user
-    var downloadLink by remember { mutableStateOf("https://undirty.pythonanywhere.com/api/dataset-reply/") }
-    var replyMessage by remember { mutableStateOf("dataset sudah tersedia silahkan download") }
-
-    // State untuk dropdown status
+    var downloadLink by remember { mutableStateOf("") }
+    var replyMessage by remember { mutableStateOf("Dataset sudah tersedia, silahkan download.") }
     val statusOptions = listOf("Complete", "In Progress", "Rejected", "Pending")
     var selectedStatus by remember { mutableStateOf(statusOptions[0]) }
     var isDropdownExpanded by remember { mutableStateOf(false) }
 
     val context = LocalContext.current
+    val viewModel: DatasetRequestsViewModel = viewModel()
+    val coroutineScope = rememberCoroutineScope()
 
-    // Latar belakang halaman
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -41,7 +53,6 @@ fun ReplyScreen(
             .padding(16.dp),
         contentAlignment = Alignment.Center
     ) {
-        // Card utama di tengah
         Card(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(16.dp),
@@ -49,9 +60,10 @@ fun ReplyScreen(
             elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
         ) {
             Column(
-                modifier = Modifier.padding(24.dp)
+                modifier = Modifier
+                    .padding(24.dp)
+                    .verticalScroll(rememberScrollState())
             ) {
-                // Judul Halaman
                 Text(
                     text = "Balas Pesan untuk Proyek: \"$projectTitle\"",
                     fontSize = 20.sp,
@@ -69,17 +81,15 @@ fun ReplyScreen(
                 )
                 Spacer(modifier = Modifier.height(24.dp))
 
-                // Input field
                 OutlinedTextField(
                     value = downloadLink,
                     onValueChange = { downloadLink = it },
-                    label = { Text("Link Download Dataset (Opsional)") },
+                    label = { Text("Link Download Dataset") },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true
                 )
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // Dropdown untuk Status
                 ExposedDropdownMenuBox(
                     expanded = isDropdownExpanded,
                     onExpandedChange = { isDropdownExpanded = !isDropdownExpanded }
@@ -123,7 +133,6 @@ fun ReplyScreen(
                 )
                 Spacer(modifier = Modifier.height(32.dp))
 
-                // Tombol Aksi
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.End,
@@ -135,9 +144,21 @@ fun ReplyScreen(
                     Spacer(modifier = Modifier.width(8.dp))
                     Button(
                         onClick = {
-                            // TODO: Panggil fungsi ViewModel untuk mengirim data balasan ke API
-                            Toast.makeText(context, "Balasan dikirim!", Toast.LENGTH_SHORT).show()
-                            navController.popBackStack()
+                            coroutineScope.launch {
+                                val replyApiUrl = "https://undirty.pythonanywhere.com/api/dataset-reply/"
+                                val success = viewModel.sendReply(
+                                    replyUrl = replyApiUrl,
+                                    message = replyMessage,
+                                    downloadLink = downloadLink,
+                                    status = selectedStatus
+                                )
+                                if (success) {
+                                    Toast.makeText(context, "Balasan berhasil terkirim!", Toast.LENGTH_SHORT).show()
+                                    navController.popBackStack()
+                                } else {
+                                    Toast.makeText(context, "Gagal mengirim balasan. Coba lagi.", Toast.LENGTH_LONG).show()
+                                }
+                            }
                         },
                         colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2FB5C4))
                     ) {

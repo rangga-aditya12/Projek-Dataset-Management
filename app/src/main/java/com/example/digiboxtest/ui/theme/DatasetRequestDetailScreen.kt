@@ -1,4 +1,3 @@
-// File: app/src/main/java/com/example/digiboxtest/ui/theme/DatasetRequestDetailScreen.kt
 package com.example.digiboxtest.ui.theme
 
 import androidx.compose.foundation.background
@@ -23,11 +22,11 @@ import com.example.digiboxtest.viewmodel.DatasetRequestsViewModel
 @Composable
 fun DatasetRequestDetailScreen(
     navController: NavController,
-    viewModel: DatasetRequestsViewModel // Terima ViewModel, bukan 'request'
+    viewModel: DatasetRequestsViewModel
 ) {
-    // Ambil state dari ViewModel
     val request by viewModel.selectedRequest.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
+    val message by viewModel.message.collectAsState()
 
     Box(
         modifier = Modifier
@@ -36,12 +35,9 @@ fun DatasetRequestDetailScreen(
             .padding(16.dp),
         contentAlignment = Alignment.Center
     ) {
-        // Tampilkan indikator loading jika sedang mengambil data
         if (isLoading) {
             CircularProgressIndicator()
-        }
-        // Jika data sudah ada (tidak null), tampilkan Card detail
-        else if (request != null) {
+        } else if (request != null) {
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(16.dp),
@@ -63,14 +59,14 @@ fun DatasetRequestDetailScreen(
                             .padding(bottom = 24.dp)
                     )
 
-                    // Gunakan data dari state 'request'
-                    DetailRow(label = "Nama Proyek:", value = request!!.projectName)
+                    // Mengakses data dari objek yang sudah benar sesuai struktur JSON.
+                    DetailRow(label = "Nama Proyek:", value = request!!.projectDetail?.name)
                     DetailRow(label = "Deskripsi Masalah:", value = request!!.problemDescription)
                     DetailRow(label = "Target:", value = request!!.target)
                     DetailRow(label = "Tipe Data:", value = request!!.dataType)
                     DetailRow(label = "Aktivitas Pemrosesan:", value = request!!.processingActivity)
-                    DetailRow(label = "Jumlah Fitur:", value = request!!.featureCount.toString())
-                    DetailRow(label = "Ukuran Dataset:", value = request!!.datasetSize.toString())
+                    DetailRow(label = "Jumlah Fitur:", value = request!!.featureCount?.toString())
+                    DetailRow(label = "Ukuran Dataset:", value = request!!.datasetSize) // Langsung String
                     DetailRow(label = "Format File:", value = request!!.fileFormat)
                     DetailRow(label = "Tanggal Mulai:", value = request!!.startDate)
                     DetailRow(label = "Tanggal Selesai:", value = request!!.endDate)
@@ -86,16 +82,19 @@ fun DatasetRequestDetailScreen(
                     }
                 }
             }
-        }
-        // Jika tidak loading dan data null (misal: terjadi error)
-        else {
-            Text("Gagal memuat detail permintaan.")
+        } else {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text("Gagal memuat detail permintaan.")
+                Spacer(modifier = Modifier.height(8.dp))
+                // Tampilkan pesan error dari ViewModel jika ada
+                Text(message, color = Color.Gray, textAlign = TextAlign.Center)
+            }
         }
     }
 }
 
 @Composable
-private fun DetailRow(label: String, value: String) {
+private fun DetailRow(label: String, value: String?) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -107,6 +106,9 @@ private fun DetailRow(label: String, value: String) {
             fontWeight = FontWeight.SemiBold,
             modifier = Modifier.width(150.dp)
         )
-        Text(text = value, modifier = Modifier.weight(1f))
+        Text(
+            text = value ?: "-", // Tampilkan "-" jika value adalah null
+            modifier = Modifier.weight(1f)
+        )
     }
 }
