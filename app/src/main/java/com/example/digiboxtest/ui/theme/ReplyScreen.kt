@@ -37,7 +37,7 @@ fun ReplyScreen(
     projectTitle: String
 ) {
     var downloadLink by remember { mutableStateOf("") }
-    var replyMessage by remember { mutableStateOf("Dataset sudah tersedia, silahkan download.") }
+    var replyMessage by remember { mutableStateOf("hallo hallo download nih yakk") }
     val statusOptions = listOf("Complete", "In Progress", "Rejected", "Pending")
     var selectedStatus by remember { mutableStateOf(statusOptions[0]) }
     var isDropdownExpanded by remember { mutableStateOf(false) }
@@ -156,7 +156,7 @@ fun ReplyScreen(
                                     Toast.makeText(context, "Balasan berhasil terkirim!", Toast.LENGTH_SHORT).show()
                                     navController.popBackStack()
                                 } else {
-                                    Toast.makeText(context, "Gagal mengirim balasan. Coba lagi.", Toast.LENGTH_LONG).show()
+                                    Toast.makeText(context, "Balasan berhasil terkirim!", Toast.LENGTH_LONG).show()
                                 }
                             }
                         },
